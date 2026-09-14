@@ -1,0 +1,2640 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DHBT Dashboard</title>
+  <!-- DHBT-Code | Developt by DHBT -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="/analyticsDashboard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}
+    html,body{background:#070d1f;color:#e8eaf6;font-family:'Inter','Segoe UI',sans-serif;line-height:1.5}
+
+    /* Background */
+    .bg-glow{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;
+      background:radial-gradient(ellipse at 15% 0%,rgba(77,163,255,0.13) 0%,transparent 55%),
+                 radial-gradient(ellipse at 85% 10%,rgba(109,141,255,0.10) 0%,transparent 50%),
+                 radial-gradient(ellipse at 50% 90%,rgba(166,107,255,0.08) 0%,transparent 50%);
+      pointer-events:none}
+
+    /* Sidebar */
+    #sidebar{
+      background:rgba(10,17,41,0.92);border-right:1px solid rgba(255,255,255,0.07);
+      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      display:flex;flex-direction:column;gap:0;padding:0;width:14.5rem;min-height:100vh;overflow-y:auto
+    }
+    .sidebar-header{padding:1.25rem 1rem 1rem;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:.5rem}
+    .sidebar-header h2{font-size:1rem;font-weight:700;color:#fff;letter-spacing:-.01em}
+    .sidebar-footer{padding:.75rem 1rem 1rem;border-top:1px solid rgba(255,255,255,0.07);margin-top:auto}
+
+    .nav-category{padding:.3rem .75rem .3rem .75rem;margin-top:.6rem;font-size:.68rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:.08em;color:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:space-between;
+      cursor:pointer;user-select:none;transition:color .15s;border-radius:6px}
+    .nav-category:hover{color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.04)}
+    .nav-category .chevron{transition:transform .2s;font-size:.6rem;opacity:.6}
+    .nav-category.expanded .chevron{transform:rotate(90deg)}
+
+    .nav-items{overflow:hidden;transition:max-height .25s ease;padding:0 .5rem}
+    .nav-items.collapsed{max-height:0}
+    .nav-items.expanded{max-height:600px}
+
+    .nav-item{padding:.42rem .65rem;border-radius:7px;cursor:pointer;transition:all .15s;
+      font-size:.83rem;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:.4rem;margin-bottom:1px}
+    .nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.9)}
+    .nav-item.active{background:linear-gradient(90deg,rgba(77,163,255,0.22),rgba(109,141,255,0.15));
+      color:#7dc4ff;font-weight:600;border-left:2px solid #4DA3FF;padding-left:calc(.65rem - 2px)}
+
+    /* Cards */
+    .card{background:rgba(255,255,255,0.035);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1.4rem;
+      box-shadow:0 4px 24px rgba(0,0,0,0.25)}
+
+    /* Inputs */
+    .inp{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:9px;
+      padding:.5rem .8rem;color:#ffffff;width:100%;font-size:.875rem;transition:border-color .15s,background .15s}
+    .inp:focus{outline:none;border-color:#4DA3FF;background:rgba(77,163,255,0.07)}
+    .inp::placeholder{color:rgba(255,255,255,0.3)}
+
+    /* Buttons */
+    .btn{padding:.45rem 1.1rem;border-radius:8px;font-weight:600;cursor:pointer;transition:all .15s;
+      font-size:.855rem;border:none;display:inline-flex;align-items:center;gap:.35rem}
+    .btn-blue{background:linear-gradient(135deg,#4DA3FF,#6D8DFF);color:#fff;box-shadow:0 2px 12px rgba(77,163,255,0.3)}
+    .btn-blue:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 4px 16px rgba(77,163,255,0.4)}
+    .btn-red{background:#ed4245;color:#fff;box-shadow:0 2px 8px rgba(237,66,69,0.25)}
+    .btn-red:hover{background:#c03537;transform:translateY(-1px)}
+    .btn-green{background:#3ba55c;color:#fff;box-shadow:0 2px 8px rgba(59,165,92,0.25)}
+    .btn-green:hover{background:#2d7d46;transform:translateY(-1px)}
+    .btn-gray{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.12)}
+    .btn-gray:hover{background:rgba(255,255,255,0.12);transform:translateY(-1px)}
+
+    /* Tables */
+    table{width:100%;font-size:.855rem;border-collapse:separate;border-spacing:0}
+    th{text-align:left;padding:.6rem .75rem .6rem 0;color:rgba(255,255,255,0.45);font-weight:600;
+      font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid rgba(255,255,255,0.08)}
+    td{padding:.6rem .75rem .6rem 0;border-bottom:1px solid rgba(255,255,255,0.05);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:rgba(255,255,255,0.04)}
+
+    /* Toast */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:.7rem 1.15rem;border-radius:10px;
+      font-weight:600;font-size:.875rem;z-index:9999;animation:fadein .2s;
+      box-shadow:0 4px 20px rgba(0,0,0,0.4);display:flex;align-items:center;gap:.5rem}
+    @keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.22)}
+
+    /* Misc */
+    select.inp option,select.inp optgroup{background:#0c1530;color:#fff}
+    input[type="date"],input[type="datetime-local"],input[type="time"]{color-scheme:dark}
+    canvas{background:transparent!important}
+    main{background:transparent}
+
+    /* Section heading */
+    .section-title{font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:1.5rem;
+      display:flex;align-items:center;gap:.5rem}
+    .section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07);margin-left:.75rem}
+
+    /* Stat badge */
+    .stat-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:20px;
+      font-size:.75rem;font-weight:600;background:rgba(77,163,255,0.15);color:#7dc4ff}
+
+    /* Skeleton loader */
+    .skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.12) 50%,rgba(255,255,255,0.06) 75%);
+      background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .skel-line{height:14px;margin-bottom:10px;border-radius:4px}
+    .skel-circle{border-radius:50%}
+
+    /* Confirmation Modal */
+    #dhbt-modal-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);
+      display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
+    #dhbt-modal-overlay.open{opacity:1;pointer-events:all}
+    #dhbt-modal-box{background:#0e1838;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.75rem;
+      width:100%;max-width:400px;box-shadow:0 16px 60px rgba(0,0,0,0.6);transform:scale(.95);transition:transform .18s}
+    #dhbt-modal-overlay.open #dhbt-modal-box{transform:scale(1)}
+    #dhbt-modal-icon{font-size:2rem;margin-bottom:.6rem;text-align:center}
+    #dhbt-modal-title{font-size:1.1rem;font-weight:700;color:#fff;text-align:center;margin-bottom:.4rem}
+    #dhbt-modal-msg{font-size:.875rem;color:rgba(255,255,255,0.6);text-align:center;margin-bottom:1.25rem}
+    #dhbt-modal-btns{display:flex;gap:.75rem;justify-content:center}
+
+    /* Sidebar badge */
+    .nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
+      padding:0 5px;border-radius:99px;font-size:.65rem;font-weight:700;background:#ed4245;color:#fff;margin-left:auto}
+
+    /* Table search */
+    .tbl-search{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+    .tbl-search input{max-width:240px}
+
+    /* Stat card improved */
+    .stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;
+      padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;transition:border-color .15s}
+    .stat-card:hover{border-color:rgba(255,255,255,0.15)}
+    .stat-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+    .stat-card-val{font-size:1.75rem;font-weight:800;line-height:1;margin-bottom:.2rem}
+    .stat-card-lbl{font-size:.75rem;color:rgba(255,255,255,0.5);font-weight:500}
+
+    @media(max-width:640px){
+      #sidebar{position:fixed;left:-15rem;top:0;bottom:0;z-index:40;transition:left .22s;width:15rem}
+      #sidebar.open{left:0;box-shadow:4px 0 32px rgba(0,0,0,0.5)}
+      #menuToggle{display:block!important}
+      main{padding:1rem;padding-top:3.5rem}
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<div class="bg-glow"></div>
+
+<!-- CONFIRM MODAL -->
+<div id="dhbt-modal-overlay">
+  <div id="dhbt-modal-box">
+    <div id="dhbt-modal-icon"></div>
+    <div id="dhbt-modal-title"></div>
+    <div id="dhbt-modal-msg"></div>
+    <div id="dhbt-modal-btns"></div>
+  </div>
+</div>
+
+<!-- TICKET CATEGORY MODAL -->
+<div id="ticket-modal-overlay" onclick="if(event.target===this)closeTicketModal()" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .18s">
+  <div id="ticket-modal-box" style="background:#0e1838;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.75rem;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 16px 60px rgba(0,0,0,0.6)"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center" style="padding:1rem">
+  <div style="width:100%;max-width:380px">
+    <div class="card" style="padding:2rem;box-shadow:0 8px 48px rgba(0,0,0,0.5)">
+      <div style="text-align:center;margin-bottom:1.75rem">
+        <div style="font-size:2.2rem;margin-bottom:.5rem">🤖</div>
+        <h1 id="loginTitle" style="font-size:1.35rem;font-weight:800;color:#fff;letter-spacing:-.02em;margin:0 0 .35rem">DHBT Dashboard</h1>
+        <p style="color:rgba(255,255,255,0.45);font-size:.85rem;margin:0">Mit deinem User-Interface Zugang einloggen</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.35rem">Discord-Name</label>
+          <input id="loginUser" placeholder="Leer lassen für Master-Admin" class="inp" />
+        </div>
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.35rem">Passwort</label>
+          <input id="loginPass" type="password" placeholder="••••••••" class="inp" onkeydown="if(event.key==='Enter')login()" />
+        </div>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.83rem;color:rgba(255,255,255,0.6);cursor:pointer;user-select:none">
+          <input id="loginRemember" type="checkbox" style="width:15px;height:15px;accent-color:#4DA3FF" checked />
+          Angemeldet bleiben (30 Tage)
+        </label>
+        <button onclick="login()" class="btn btn-blue" style="width:100%;justify-content:center;padding:.6rem;font-size:.9rem;margin-top:.25rem">Einloggen</button>
+        <p id="loginErr" style="color:#ed4245;font-size:.83rem;text-align:center;display:none">Falsches Passwort</p>
+        <a href="/dashboard" style="text-align:center;font-size:.78rem;color:rgba(255,255,255,0.4);text-decoration:none;margin-top:.5rem">← Anderen Server wählen</a>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:.72rem;color:rgba(255,255,255,0.25);margin-top:1rem">DHBT-Code · Developt by DHBT</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden min-h-screen" style="display:none">
+  <button id="menuToggle" onclick="toggleSidebar()" style="position:fixed;top:12px;left:12px;z-index:50;display:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;cursor:pointer;color:#fff;font-size:1.2rem">☰</button>
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <h2 id="dashTitle">DHBT Dashboard</h2>
+      <div id="userBadge" style="font-size:.75rem;margin-top:.4rem;color:rgba(255,255,255,0.45)"></div>
+    </div>
+    <div id="navItems" style="flex:1;padding:0 .375rem"></div>
+    <div class="sidebar-footer">
+      <p style="font-size:.68rem;color:rgba(255,255,255,0.25);text-align:center;margin-bottom:.6rem">DHBT-Code · Developt by DHBT</p>
+      <button onclick="openGuildSwitcher()" class="btn btn-gray" style="width:100%;justify-content:center;margin-bottom:.5rem;font-size:.82rem">🔄 Server wechseln</button>
+      <a href="/" class="btn btn-gray" style="width:100%;justify-content:center;margin-bottom:.5rem;font-size:.82rem">🏠 Hauptseite</a>
+      <button onclick="logout()" class="btn btn-red" style="width:100%;justify-content:center;font-size:.82rem">Ausloggen</button>
+    </div>
+  </aside>
+  <main style="flex:1;padding:2rem 2.25rem;overflow-y:auto;min-width:0">
+    <div id="content"></div>
+  </main>
+</div>
+
+<script src="/home/dashboard/faqManager.js"></script>
+<script src="/js/easteregg.js"></script>
+<script>
+let userNames={}, myPermissions=[], myRole='', myUsername='';
+let myGuildId=null, myGuildName=null, myGuildIcon=null;
+let currentSectionId='overview';
+let _refreshTimer=null, _refreshActive=false;
+const _syncToken = "MsxxqyxlathzIDKBYjtz";
+
+// Guild-ID aus URL lesen: /dashboard/<guildId>
+function getGuildIdFromUrl(){
+  const m = window.location.pathname.match(/^\/dashboard\/(\d+)/);
+  return m ? m[1] : null;
+}
+
+const ALL_SECTIONS=[
+  {id:'overview',      label:'📊 Übersicht',        perm:'overview',        category:'Übersicht'},
+  {id:'botStatus', label:'🖥️️ Bot Status',       perm:'overview',        category:'Übersicht'},
+  {id:'userSearch',    label:'🔍 User Suche',        perm:'overview',        category:'Übersicht'},
+
+  {id:'coins', label:'💰 Coins Rangliste',   perm:'coins',           category:'Economy'},
+  {id:'economy',       label:'⚙️ Economy Config',    perm:'economy',         category:'Economy'},
+  {id:'payHistory',    label:'💸 Pay History',       perm:'payHistory',        category:'Economy'},
+  {id:'shop', label:'🛒 Shop',              perm:'shop',             category:'Economy'},
+  {id:'publicShop',    label:'🛍️ Public Shop',       perm:'publicShop',        category:'Economy'},
+  {id:'dailyRewards',  label:'🎁 Daily Rewards',     perm:'dailyRewards',      category:'Economy'},
+
+  {id:'xp',            label:'⭐ XP Rangliste',      perm:'xp',               category:'XP'},
+  {id:'xpPrestige',    label:'🏆 XP Prestige',       perm:'xp',               category:'XP'},
+  {id:'xpConfig', label:'📈 XP Config',         perm:'xpConfig',         category:'XP'},
+  {id:'xpBooster',     label:'⚡ XP Booster',         perm:'xpConfig',         category:'XP'},
+  {id:'achievements',  label:'🏆 Achievements',      perm:'achievements',      category:'XP'},
+  {id:'weekly', label:'📅 Weekly Mission',    perm:'weekly',           category:'XP'},
+  {id:'dailyMissions', label:'📋 Daily Missions',    perm:'dailyMissions',    category:'XP'},
+
+  {id:'zahlen', label:'🔢 Zahlen-Spiel',      perm:'zahlen',           category:'Spiele'},
+  {id:'miniGamesCooldown', label:'🎮 Mini-Games Cooldown', perm:'commands',   category:'Spiele'},
+  {id:'commands', label:'🔧 Commands',          perm:'commands',          category:'Spiele'},
+
+  {id:'userEdit',      label:'👤 User bearbeiten',   perm:'userEdit',         category:'Community'},
+  {id:'blacklist', label:'🚫 LB Blacklist',       perm:'blacklist',        category:'Community'},
+  {id:'membersBlacklist', label:'🚫 Mitglieder Blacklist', perm:'blacklist',   category:'Community'},
+  {id:'voiceStats',    label:'🎧 Voice Stats',       perm:'voiceStats',        category:'Community'},
+  {id:'roleManagement',label:'👥 Rechteverwaltung',  perm:'roleManagement',    category:'Community'},
+  {id:'absenceManagement', label:'📅 Abwesenheiten',   perm:'absenceManagement',category:'Community'},
+  {id:'probezeitManagement',label:'⏳ Probezeit',    perm:'probezeitManagement',category:'Community'},
+
+  {id:'kartenSettings',label:'🗺️ Karten Config',     perm:'kartenSettings',    category:'Karten'},
+  {id:'kartenOrders', label:'📦 Karten Bestellungen', perm:'kartenOrders',      category:'Karten'},
+
+  {id:'builderOrders', label:'📦 Builder Bestellungen', perm:'builderOrders',    category:'Builder'},
+  {id:'builderJobs', label:'🔨 Builder Aufträge',     perm:'builderJobs',      category:'Builder'},
+
+  {id:'orderLimits', label:'📊 Auftrags-Limits',     perm:'kartenSettings',    category:'System'},
+
+  {id:'restartManager', label:'🔄 Restart Manager', perm:'roleManagement',  category:'System'},
+  {id:'siteLock', label:'🔒 Website-Sperre',    perm:'roleManagement',    category:'System'},
+  {id:'websiteDesign', label:'🎨 Website-Design',    perm:'roleManagement',    category:'System'},
+  {id:'auditLog',      label:'📜 Audit Log',         perm:'roleManagement',    category:'System'},
+  {id:'analytics',     label:'📈 Analytics',         perm:'overview',          category:'System'},
+  {id:'board',         label:'🎫 Board',             perm:'dhbt-board_access',  category:'System', url:'/board'},
+  {id:'embedBuilder',  label:'🧱 Embed Builder',      perm:'dhbt-embed_builder', category:'System', url:'/embed'},
+  {id:'marketConfig',  label:'🛒 Market Config',      perm:'roleManagement',    category:'System'},
+  {id:'auctionConfig', label:'🔨 Auktionshaus',      perm:'roleManagement',    category:'System'},
+  {id:'shardConfig',   label:'🪙 Shards Config',      perm:'roleManagement',    category:'System'},
+  {id:'logSystem',     label:'📋 Log-System',      perm:'roleManagement',    category:'System'},
+
+  {id:'ticketPanel',   label:'🎫 Ticket Panel',    perm:'roleManagement',    category:'Tickets'},
+  {id:'ticketCategories', label:'📂 Ticket Kategorien', perm:'roleManagement', category:'Tickets'},
+  {id:'ticketList',    label:'📋 Ticket Übersicht', perm:'roleManagement',    category:'Tickets'},
+  {id:'ticketStats',   label:'📊 Ticket Statistiken', perm:'roleManagement',  category:'Tickets'},
+
+  {id:'myAccount',     label:'🔑 Mein Account',       perm:'__self__',          category:'Account'},
+  {id:'faqManagement', label:'❓ FAQ Verwaltung',     perm:'dhbt-faq_access',   category:'System'},
+  {id:'polls', label:'🗳️ Abstimmungen', perm:'pollManagement', category:'Team'},
+];
+
+function can(perm){return perm==='__self__'||myUsername==='admin'||myRole==='owner'||myPermissions.includes(perm);}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
+function uname(id){
+  if(userNames[id]) return '<span class="font-semibold text-white">'+userNames[id]+'</span> <span class="text-xs text-white/50">'+id+'</span>';
+  return '<span class="font-mono text-xs text-white/60">'+id+'</span>';
+}
+function escapeHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escapeAttr(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg,ok){
+  const t=document.createElement('div');
+  t.className='toast '+(ok!==false?'bg-[#3ba55c]':'bg-[#ed4245]')+' text-white';
+  t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+function card(c){return '<div class="card" style="margin-bottom:1.25rem">'+c+'</div>';}
+function h2t(t){return '<div class="section-title">'+t+'</div>';}
+function skeleton(lines=4,width='100%'){return '<div style="width:'+width+'">'+Array.from({length:lines},(_,i)=>'<div class="skeleton skel-line" style="width:'+(i===lines-1?'60%':'100%')+';"></div>').join('')+'</div>';}
+
+function dhbtConfirm(title,msg,icon='⚠️'){return new Promise(resolve=>{const o=document.getElementById('dhbt-modal-overlay');document.getElementById('dhbt-modal-icon').textContent=icon;document.getElementById('dhbt-modal-title').textContent=title;document.getElementById('dhbt-modal-msg').textContent=msg;const btns=document.getElementById('dhbt-modal-btns');btns.innerHTML='<button class="btn btn-gray" id="m-no">Abbrechen</button><button class="btn btn-red" id="m-yes">Bestätigen</button>';o.classList.add('open');const close=(v)=>{o.classList.remove('open');resolve(v);};document.getElementById('m-yes').onclick=()=>close(true);document.getElementById('m-no').onclick=()=>close(false);o.onclick=(e)=>{if(e.target===o)close(false);};}); }
+
+function csvExport(filename,headers,rows){const esc=v=>('"'+String(v??'').replace(/"/g,'""')+'"');const content=[headers.map(esc).join(','),...rows.map(r=>r.map(esc).join(','))].join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(content);a.download=filename+'.csv';a.click();}
+
+async function updateSidebarBadges(){
+  try{
+    const [k,b]=await Promise.all([
+      fetch('/api/karten/orders').then(r=>r.json()).catch(()=>[]),
+      fetch('/api/builder/orders').then(r=>r.json()).catch(()=>[])
+    ]);
+    const openK=(k||[]).filter(o=>o.status==='open'||o.status==='pending').length;
+    const openB=(b||[]).filter(o=>o.status==='open'||o.status==='pending').length;
+    ['kartenOrders','builderOrders'].forEach((sec,i)=>{
+      const el=document.querySelector('[data-sec="'+sec+'"]');
+      if(!el)return;
+      const count=i===0?openK:openB;
+      let badge=el.querySelector('.nav-badge');
+      if(count>0){
+        if(!badge){badge=document.createElement('span');badge.className='nav-badge';el.appendChild(badge);}
+        badge.textContent=count;
+      } else if(badge){badge.remove();}
+    });
+  }catch(e){}
+}
+
+function addTableSearch(tbodySelector,colIndex=1){
+  const wrapper=document.querySelector('.tbl-search input');
+  if(!wrapper)return;
+  wrapper.addEventListener('input',function(){
+    const q=this.value.toLowerCase();
+    document.querySelectorAll(tbodySelector+' tr').forEach(tr=>{
+      const cells=tr.querySelectorAll('td');
+      const text=Array.from(cells).map(c=>c.textContent).join(' ').toLowerCase();
+      tr.style.display=text.includes(q)?'':'none';
+    });
+  });
+}
+function tbl(heads,rows){
+  return '<table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function row(cells){return '<tr>'+cells.map(c=>'<td>'+c+'</td>').join('')+'</tr>';}
+
+// ---- AUTH ----
+async function login(){
+  const username=document.getElementById('loginUser').value.trim();
+  const password=document.getElementById('loginPass').value;
+  const rememberMe=document.getElementById('loginRemember').checked;
+  const errEl=document.getElementById('loginErr');
+  errEl.style.display='none';
+  const guildId=getGuildIdFromUrl();
+  if(!guildId){ errEl.textContent='Keine Guild-ID in URL gefunden.'; errEl.style.display='block'; return; }
+  const body={password,rememberMe,guildId};
+  if(username) body.username=username;
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){
+    const d=await r.json();
+    myPermissions=d.permissions||[]; myRole=d.role; myUsername=username||'admin';
+    myGuildId=d.guildId||guildId;
+    if(d.firstLogin){
+      showChangePasswordDialog(true);
+    } else {
+      showApp();
+    }
+  } else {
+    const d=await r.json().catch(()=>({}));
+    errEl.textContent=d.error||'Login fehlgeschlagen';
+    errEl.style.display='block';
+  }
+}
+async function logout(){await fetch('/api/logout',{method:'POST'});location.href='/dashboard';}
+async function checkAuth(){
+  try {
+    const r=await fetch('/api/auth-check');
+    if(!r.ok){ location.href='/dashboard'; return; }
+    const d=await r.json();
+    if(!d.loggedIn){ location.href='/dashboard'; return; }
+    const urlGuildId=getGuildIdFromUrl();
+    // Session-Guild muss mit URL-Guild übereinstimmen
+    if(d.guildId && urlGuildId && d.guildId!==urlGuildId){
+      await fetch('/api/logout',{method:'POST'});
+      location.href='/dashboard';
+      return;
+    }
+    if(!d.guildId && !urlGuildId){ location.href='/dashboard'; return; }
+    myPermissions=d.permissions||[];myRole=d.role;myUsername=d.username;
+    myGuildId=d.guildId||urlGuildId;
+    if(myGuildId){
+      const cg=await fetch('/api/current-guild').then(r=>r.json()).catch(()=>({}));
+      if(cg.selected){myGuildName=cg.guildName;myGuildIcon=cg.guildIcon;}
+    }
+    // firstLogin prüfen
+    const fl=await fetch('/api/first-login').then(r=>r.json()).catch(()=>({firstLogin:false}));
+    if(fl.firstLogin){
+      showChangePasswordDialog(true);
+    } else {
+      showApp();
+    }
+  } catch(e) { location.href='/dashboard'; }
+}
+
+// ============ PASSWORT ÄNDERN (firstLogin) ============
+function showChangePasswordDialog(isFirstLogin){
+  const existing=document.getElementById('changePwdOverlay');
+  if(existing) existing.remove();
+  const overlay=document.createElement('div');
+  overlay.id='changePwdOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+  overlay.innerHTML=`
+    <div style="background:#0d1530;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:2rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+      <h2 style="color:#fff;font-size:1.3rem;font-weight:700;margin:0 0 .5rem">${isFirstLogin?'Willkommen!':'Passwort ändern'}</h2>
+      <p style="color:rgba(255,255,255,0.6);font-size:.85rem;margin:0 0 1.5rem">${isFirstLogin?'Bitte setze ein neues Passwort für deinen Dashboard-Zugang.':'Gib dein aktuelles und neues Passwort ein.'}</p>
+      ${isFirstLogin?'':'<input id="cpCurrent" type="password" placeholder="Aktuelles Passwort" style="width:100%;padding:.7rem .9rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.9rem;margin-bottom:.75rem;outline:none" />'}
+      <input id="cpNew" type="password" placeholder="Neues Passwort (min. 6 Zeichen)" style="width:100%;padding:.7rem .9rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.9rem;margin-bottom:.75rem;outline:none" />
+      <input id="cpConfirm" type="password" placeholder="Neues Passwort bestätigen" style="width:100%;padding:.7rem .9rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.9rem;margin-bottom:1rem;outline:none" />
+      <div id="cpErr" style="color:#ed4245;font-size:.82rem;margin-bottom:.75rem;display:none"></div>
+      <button id="cpSubmit" style="width:100%;padding:.75rem;background:linear-gradient(135deg,#4DA3FF,#6D8DFF);border:none;border-radius:8px;color:#fff;font-weight:600;font-size:.95rem;cursor:pointer">Passwort speichern</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('cpSubmit').onclick=async()=>{
+    const errEl=document.getElementById('cpErr');
+    errEl.style.display='none';
+    const newPwd=document.getElementById('cpNew').value;
+    const confirmPwd=document.getElementById('cpConfirm').value;
+    const currentPwd=isFirstLogin?'':(document.getElementById('cpCurrent')?.value||'');
+    if(newPwd.length<6){errEl.textContent='Passwort muss mindestens 6 Zeichen lang sein.';errEl.style.display='block';return;}
+    if(newPwd!==confirmPwd){errEl.textContent='Passwörter stimmen nicht überein.';errEl.style.display='block';return;}
+    const r=await fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword:currentPwd,newPassword:newPwd})});
+    if(r.ok){
+      overlay.remove();
+      showApp();
+    } else {
+      const d=await r.json().catch(()=>({}));
+      errEl.textContent=d.error||'Fehler beim Ändern des Passworts.';
+      errEl.style.display='block';
+    }
+  };
+}
+
+async function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  const app=document.getElementById('app');
+  app.style.display='flex'; app.style.flexDirection='row'; app.classList.remove('hidden');
+  const info=await fetch('/api/info').then(r=>r.json()).catch(()=>({}));
+  document.getElementById('dashTitle').textContent=info.title||'DHBT Dashboard';
+  document.title=info.title||'DHBT Dashboard';
+  const rc={owner:'#ffd700',admin:'#ed4245',moderator:'#f0b132'};
+  const roleDisplay=myRole ? myRole.charAt(0).toUpperCase()+myRole.slice(1) : myRole;
+  const guildBadge = myGuildName
+    ? `<div style="margin-top:.3rem;font-size:.72rem;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:.35rem">${myGuildIcon?`<img src="${myGuildIcon}" style="width:14px;height:14px;border-radius:50%" />`:'🏠'} ${myGuildName}</div>`
+    : '';
+  document.getElementById('userBadge').innerHTML='<span style="color:'+(rc[myRole]||'#aaa')+'">'+roleDisplay+'</span>'+guildBadge;
+  userNames=await fetch('/api/users/names').then(r=>r.json()).catch(()=>({}));
+  buildNav();
+  showSection('overview');
+  updateSidebarBadges();
+  setInterval(updateSidebarBadges, 60000);
+}
+function buildNav(){
+  const visible=ALL_SECTIONS.filter(s=>can(s.perm));
+  const grouped={};
+  for(const s of visible){(grouped[s.category]=grouped[s.category]||[]).push(s);}
+  let html='';
+  for(const [cat,items] of Object.entries(grouped)){
+    const catId='cat-'+cat.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const hasActive=items.some(i=>i.id===currentSectionId);
+    html+="<div class='nav-category "+(hasActive?'expanded':'')+"' onclick='toggleCategory(\""+catId+"\")' data-cat='"+catId+"'>"+cat+"<span class='chevron'>▶</span></div>";
+    html+="<div class='nav-items "+(hasActive?'expanded':'collapsed')+"' data-cat-items='"+catId+"'>";
+    html+=items.map(s=>"<div class='nav-item' onclick='showSection(\""+s.id+"\")' data-sec='"+s.id+"'>"+s.label+"</div>").join('');
+    html+='</div>';
+  }
+  document.getElementById('navItems').innerHTML=html;
+}
+function toggleCategory(catId){
+  const header=document.querySelector("[data-cat='"+catId+"']");
+  const items=document.querySelector("[data-cat-items='"+catId+"']");
+  if(!header||!items)return;
+  const expanded=items.classList.contains('expanded');
+  if(expanded){items.classList.remove('expanded');items.classList.add('collapsed');header.classList.remove('expanded');}
+  else{items.classList.remove('collapsed');items.classList.add('expanded');header.classList.add('expanded');}
+}
+function showSection(id){
+  const sec=ALL_SECTIONS.find(s=>s.id===id);
+  if(!sec||!can(sec.perm)) return;
+  if(sec.url){ location.href=sec.url; return; }
+  currentSectionId=id;
+  if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;_refreshActive=false;}
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.querySelector("[data-sec='"+id+"']");
+  if(el){
+    el.classList.add('active');
+    const catItems=el.closest('.nav-items');
+    if(catItems){
+      const catId=catItems.getAttribute('data-cat-items');
+      const header=document.querySelector("[data-cat='"+catId+"']");
+      catItems.classList.remove('collapsed');catItems.classList.add('expanded');
+      if(header)header.classList.add('expanded');
+    }
+  }
+  trackClientPage('/dashboard#'+id);
+  if(sections[id]) sections[id]();
+}
+function trackClientPage(path){
+  const match=document.cookie.match(/(?:^|; )cookie_consent=([^;]*)/);
+  const consent=match?decodeURIComponent(match[1]):null;
+  if(consent!=='accepted') return;
+  const vMatch=document.cookie.match(/(?:^|; )_dhbt_vid=([^;]*)/);
+  const visitorId=vMatch?decodeURIComponent(vMatch[1]):null;
+  if(visitorId) try{localStorage.setItem('_dhbt_vid',visitorId);}catch(e){}
+  fetch('/api/analytics/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,visitorId})}).catch(()=>{});
+}
+function startRefresh(fn,sec){
+  _refreshActive=!_refreshActive;
+  const btn=document.getElementById('refreshBtn');
+  if(_refreshActive){
+    if(btn)btn.textContent='⏹ Stop Auto-Refresh';
+    _refreshTimer=setInterval(()=>sections[sec]&&sections[sec](),10000);
+    toast('🔄 Auto-Refresh aktiv (10s)');
+  } else {
+    if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}
+    if(btn)btn.textContent='🔄 Auto-Refresh';
+    toast('⏹ Auto-Refresh gestoppt');
+  }
+}
+
+
+// ---- ABSTIMMUNGEN ----
+function pollPreviewData(){
+  const title=document.getElementById('poll-title')?.value?.trim()||'Abstimmung';
+  const description=document.getElementById('poll-description')?.value?.trim()||'';
+  const multiple=!!document.getElementById('poll-multiple')?.checked;
+  const secret=!!document.getElementById('poll-secret')?.checked;
+  const duration=Math.max(1,Number(document.getElementById('poll-duration')?.value||60));
+  const opts=(window._pollOptions||[]).filter(o=>o.label.trim()).map(o=>({emoji:o.emoji.trim(),label:o.label.trim()}));
+  return {title,description,multiple,secret,duration,options:opts};
+}
+function renderPollOptions(){
+  const el=document.getElementById('poll-options');
+  if(!el)return;
+  const opts=window._pollOptions||[];
+  el.innerHTML=opts.map((o,i)=>
+    '<div class="flex gap-2 items-center p-2 rounded-lg" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">'
+    +'<input class="inp" style="width:62px;text-align:center" maxlength="8" value="'+escapeAttr(o.emoji)+'" placeholder="😀" oninput="updatePollOption('+i+',\'emoji\',this.value)">'
+    +'<input class="inp flex-1" maxlength="80" value="'+escapeAttr(o.label)+'" placeholder="Antwort '+(i+1)+'" oninput="updatePollOption('+i+',\'label\',this.value)">'
+    +(opts.length>2?'<button onclick="removePollOption('+i+')" class="btn btn-red" title="Entfernen">✕</button>':'')
+    +'</div>'
+  ).join('');
+  const add=document.querySelector('button[onclick="addPollOption()"]');
+  if(add) add.disabled=opts.length>=25;
+  pollPreview();
+}
+function updatePollOption(i,key,value){
+  if(!window._pollOptions?.[i])return;
+  window._pollOptions[i][key]=value;
+  pollPreview();
+}
+function addPollOption(){
+  if((window._pollOptions||[]).length>=25){toast('❌ Maximal 25 Antworten',false);return;}
+  const used=new Set((window._pollOptions||[]).map(o=>o.emoji));
+  const emojis=['3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🅰️','🅱️','🆎','🆗','🆙','🆒','🆕','🆓','🔴','🟢','🔵','🟡','🟣','⚫','⚪','🟠','🟤'];
+  const emoji=emojis.find(e=>!used.has(e))||'🔘';
+  window._pollOptions.push({emoji,label:'Antwort '+(window._pollOptions.length+1)});
+  renderPollOptions();
+}
+function removePollOption(i){
+  if((window._pollOptions||[]).length<=2)return;
+  window._pollOptions.splice(i,1);
+  renderPollOptions();
+}
+async function loadPollTargets(){
+  const [cr,rr]=await Promise.all([
+    fetch('/api/polls/channels').then(r=>r.json()).catch(()=>({channels:[]})),
+    fetch('/api/polls/roles').then(r=>r.json()).catch(()=>({roles:[]}))
+  ]);
+  const cs=document.getElementById('poll-channel');
+  if(cs){
+    const channels=cr.channels||[];
+    cs.innerHTML='<option value="">Channel wählen…</option>'+channels.map(c=>'<option value="'+escapeAttr(c.id)+'"># '+escapeHtml(c.name)+'</option>').join('');
+  }
+  const rs=document.getElementById('poll-roles');
+  if(rs){
+    const roles=rr.roles||[];
+    rs.innerHTML=roles.length?roles.map(r=>
+      '<label class="flex items-center gap-2 text-xs text-white/75 cursor-pointer p-1.5 rounded hover:bg-white/5">'
+      +'<input type="checkbox" class="poll-role" value="'+escapeAttr(r.id)+'" onchange="pollPreview()" style="accent-color:#4DA3FF;width:14px;height:14px">'
+      +'<span style="color:'+(r.color||'#fff')+'">●</span><span>'+escapeHtml(r.name)+'</span></label>'
+    ).join(''):'<p class="text-xs text-white/40">Keine passenden Rollen gefunden.</p>';
+  }
+}
+function pollPreview(){
+  const el=document.getElementById('poll-preview');
+  if(!el)return;
+  const d=pollPreviewData();
+  const end=new Date(Date.now()+d.duration*60000);
+  const legend=d.options.map(o=>'<div style="padding:4px 0;color:rgba(255,255,255,.8)">'+escapeHtml(o.emoji)+' = <b>'+escapeHtml(o.label)+'</b></div>').join('');
+  const buttons=[];
+  for(let i=0;i<d.options.length;i++) buttons.push('<button disabled style="background:rgba(88,101,242,.75);border:0;border-radius:6px;color:#fff;padding:7px 10px;margin:3px;opacity:.9">'+escapeHtml(d.options[i].emoji)+' '+escapeHtml(d.options[i].label)+'</button>');
+  el.innerHTML='<div style="background:#313338;border-radius:8px;padding:14px;border-left:4px solid #5865F2">'
+    +'<div style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:7px">'+escapeHtml(d.title)+'</div>'
+    +(d.description?'<div style="font-size:.84rem;color:#dbdee1;white-space:pre-wrap;margin-bottom:10px">'+escapeHtml(d.description)+'</div>':'')
+    +'<div style="font-size:.78rem;color:#b5bac1;margin-bottom:10px"><b>Antworten</b><br>'+legend+'</div>'
+    +'<div style="font-size:.72rem;color:#949ba4;margin-bottom:8px">⏳ endet '+end.toLocaleString('de-DE')+' · '+(d.multiple?'Mehrere Antworten':'Eine Antwort')+' · '+(d.secret?'Geheim':'Nicht geheim')+'</div>'
+    +'<div>'+buttons.join('')+'</div></div>';
+}
+async function createPollFromDashboard(){
+  const d=pollPreviewData();
+  const channelId=document.getElementById('poll-channel')?.value||'';
+  const roleIds=[...document.querySelectorAll('.poll-role:checked')].map(x=>x.value);
+  if(!channelId){toast('❌ Bitte einen Channel auswählen',false);return;}
+  if(!d.title){toast('❌ Titel erforderlich',false);return;}
+  if(d.options.length<2){toast('❌ Mindestens 2 Antworten erforderlich',false);return;}
+  if(d.options.some(o=>!o.emoji||!o.label)){toast('❌ Jede Antwort braucht Emoji und Text',false);return;}
+  const emojis=d.options.map(o=>o.emoji);
+  if(new Set(emojis).size!==emojis.length){toast('❌ Emojis dürfen nicht doppelt sein',false);return;}
+  if(!Number.isFinite(d.duration)||d.duration<=0){toast('❌ Ungültige Dauer',false);return;}
+  const btn=document.querySelector('button[onclick="createPollFromDashboard()"]');
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch('/api/polls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      channelId,roleIds,title:d.title,description:d.description,durationMinutes:d.duration,multiple:d.multiple,secret:d.secret,options:d.options
+    })});
+    const out=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(out.error||'Abstimmung konnte nicht erstellt werden');
+    toast('✅ Abstimmung wurde gesendet!');
+    await loadPollList();
+  }catch(e){toast('❌ '+e.message,false);}
+  finally{if(btn)btn.disabled=false;}
+}
+function pollStatusBadge(p){
+  if(p.status==='active')return '<span class="stat-badge" style="background:rgba(59,165,92,.15);color:#6ee7a1">🟢 Aktiv</span>';
+  return '<span class="stat-badge" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.55)">⚫ Beendet</span>';
+}
+async function loadPollList(){
+  const el=document.getElementById('poll-list');
+  if(!el)return;
+  const r=await fetch('/api/polls').catch(()=>null);
+  if(!r||!r.ok){el.innerHTML='<p class="text-red-400 text-sm">Abstimmungen konnten nicht geladen werden.</p>';return;}
+  const d=await r.json().catch(()=>({polls:[]}));
+  const polls=d.polls||[];
+  if(!polls.length){el.innerHTML='<p class="text-white/45 text-sm">Noch keine Abstimmungen erstellt.</p>';return;}
+  el.innerHTML=polls.map(p=>{
+    const counts=p.counts||p.options.map(()=>0);
+    const results=p.options.map((o,i)=>'<span style="display:inline-block;margin:.15rem .3rem .15rem 0;padding:.2rem .45rem;border-radius:6px;background:rgba(255,255,255,.05)">'+escapeHtml(o.emoji)+' '+escapeHtml(o.label)+': <b>'+counts[i]+'</b></span>').join('');
+    const voterRows=p.secret&&p.voterDetails?.length
+      ?'<details class="mt-2"><summary class="cursor-pointer text-xs text-white/60">🔒 Wer hat wofür gestimmt ('+p.voterDetails.length+')</summary><div class="mt-2 grid gap-1">'+p.voterDetails.map(v=>'<div class="text-xs text-white/65"><b class="text-white">'+escapeHtml(v.username)+'</b> — '+v.choices.map(i=>escapeHtml(p.options[i]?.label||'?')).join(', ')+'</div>').join('')+'</div></details>'
+      :'';
+    return '<div class="p-3 mb-2 rounded-xl" style="background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)">'
+      +'<div class="flex items-center gap-2 flex-wrap"><b class="text-white">'+escapeHtml(p.title)+'</b>'+pollStatusBadge(p)+'<span class="text-xs text-white/35">Ende: '+new Date(p.endsAt).toLocaleString('de-DE')+'</span>'
+      +(p.status==='active'?'<button onclick="endPollNow(\''+escapeAttr(p.id)+'\')" class="btn btn-red text-xs ml-auto">⏹ Jetzt beenden</button>':'')+'</div>'
+      +'<div class="mt-2">'+results+'</div>'+voterRows+'</div>';
+  }).join('');
+}
+async function endPollNow(id){
+  if(!confirm('Abstimmung wirklich sofort beenden?'))return;
+  const r=await fetch('/api/polls/'+encodeURIComponent(id)+'/end',{method:'POST'});
+  if(r.ok){toast('✅ Abstimmung beendet');loadPollList();}else{toast('❌ Fehler beim Beenden',false);}
+}
+
+// ---- SECTIONS ----
+const sections={
+
+
+polls: async()=>{
+  const c=document.getElementById('content');
+  c.innerHTML=h2t('🗳️ Abstimmungen')
+    +'<div class="grid gap-4" style="grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr)">'
+    +'<div>'
+    +card('<div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-white text-lg">Neue Abstimmung</h3><p class="text-xs text-white/45 mt-1">Anonym für Discord-User • Verwaltung und geheime Stimmen im Team-Dashboard</p></div><span class="stat-badge">max. 25 Antworten</span></div>'
+      +'<div class="grid gap-3">'
+      +'<div><label class="text-sm text-white/60 block mb-1">Channel</label><select id="poll-channel" class="inp" onchange="pollPreview()"><option value="">Lade Channels…</option></select></div>'
+      +'<div><label class="text-sm text-white/60 block mb-1">Rollen pingen</label><div id="poll-roles" class="grid gap-1.5" style="grid-template-columns:1fr 1fr;max-height:150px;overflow:auto;padding:.2rem"></div></div>'
+      +'<div><label class="text-sm text-white/60 block mb-1">Titel</label><input id="poll-title" class="inp" maxlength="256" placeholder="Worum geht es?" oninput="pollPreview()"/></div>'
+      +'<div><label class="text-sm text-white/60 block mb-1">Beschreibung</label><textarea id="poll-description" class="inp" rows="4" maxlength="4000" placeholder="Weitere Informationen…" oninput="pollPreview()"></textarea></div>'
+      +'<div><label class="text-sm text-white/60 block mb-1">Dauer in Minuten</label><input id="poll-duration" class="inp" type="number" min="1" max="43200" value="60" oninput="pollPreview()"/></div>'
+      +'<div class="grid gap-2" style="grid-template-columns:1fr 1fr">'
+      +'<label class="flex items-center gap-2 text-sm text-white/75 cursor-pointer p-2 rounded-lg hover:bg-white/5"><input id="poll-multiple" type="checkbox" style="accent-color:#4DA3FF" onchange="pollPreview()"> Mehrere Antworten</label>'
+      +'<label class="flex items-center gap-2 text-sm text-white/75 cursor-pointer p-2 rounded-lg hover:bg-white/5"><input id="poll-secret" type="checkbox" checked style="accent-color:#4DA3FF" onchange="pollPreview()"> Geheime Abstimmung</label>'
+      +'</div>'
+      +'<div><div class="flex items-center justify-between mb-2"><label class="text-sm text-white/60">Antwortmöglichkeiten</label><button onclick="addPollOption()" class="btn btn-gray text-xs">＋ Antwort hinzufügen</button></div><div id="poll-options" class="grid gap-2"></div></div>'
+      +'<button onclick="createPollFromDashboard()" class="btn btn-blue w-full justify-center mt-2">🗳️ Abstimmung senden</button>'
+      +'</div>')
+    +'</div>'
+    +'<div>'
+    +'<div class="card" style="position:sticky;top:1rem"><h3 class="font-bold text-white mb-3">👁️ Live Vorschau</h3><div id="poll-preview"></div></div>'
+    +'</div></div>'
+    +'<div class="card mt-4"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white text-lg">Aktuelle & vergangene Abstimmungen</h3><button onclick="loadPollList()" class="btn btn-gray text-xs">🔄 Aktualisieren</button></div><div id="poll-list"><p class="text-white/50 text-sm">Lade…</p></div></div>';
+
+  window._pollOptions=[
+    {emoji:'1️⃣',label:'Antwort 1'},
+    {emoji:'2️⃣',label:'Antwort 2'}
+  ];
+  renderPollOptions();
+  await loadPollTargets();
+  pollPreview();
+  await loadPollList();
+},
+
+overview: async()=>{
+  const statCard=(icon,id,color,label,bg)=>'<div class="stat-card"><div class="stat-card-icon" style="background:'+bg+'">'+icon+'</div><div><div class="stat-card-val" style="color:'+color+'" id="'+id+'"><div class="skeleton" style="width:60px;height:28px"></div></div><div class="stat-card-lbl">'+label+'</div></div></div>';
+  const m=['🥇','🥈','🥉'];
+  document.getElementById('content').innerHTML=h2t('📊 Übersicht')
+    +'<div class="flex gap-2 mb-5"><button id="refreshBtn" onclick="startRefresh(null,\'overview\')" class="btn btn-gray text-xs">⏹ Stop Auto-Refresh</button></div>'
+    +'<div class="grid gap-3 mb-6" style="grid-template-columns:repeat(4,1fr)">'
+    +statCard('💰','s1','#4DA3FF','rgba(77,163,255,0.15)','Coins-Nutzer')
+    +statCard('🏆','s2','#f0b132','rgba(240,177,50,0.15)','Erfolge freigeschaltet')
+    +statCard('🎮','s3','#3ba55c','rgba(59,165,92,0.15)','Spiele heute')
+    +statCard('📅','s4','#a855f7','rgba(168,85,247,0.15)','Weekly-Teilnehmer')
+    +'</div>'
+    +'<div class="grid gap-4" style="grid-template-columns:repeat(3,1fr)">'
+    +card('<h3 class="font-semibold text-white mb-3" style="font-size:.9rem">💰 Top 5 Coins</h3><div id="ov-coins">'+skeleton(5)+'</div>')
+    +card('<h3 class="font-semibold text-white mb-3" style="font-size:.9rem">⭐ Top 5 XP</h3><div id="ov-xp">'+skeleton(5)+'</div>')
+    +card('<h3 class="font-semibold text-white mb-3" style="font-size:.9rem">🎮 Spiele heute</h3><div id="ov-games">'+skeleton(3)+'</div>')
+    +'</div>';
+  const render = async () => {
+    const [coins,xp,games,ach,weekly]=await Promise.all([
+      fetch('/api/leaderboard/coins').then(r=>r.json()).catch(()=>[]),
+      fetch('/api/leaderboard/xp').then(r=>r.json()).catch(()=>[]),
+      fetch('/api/minigames/stats').then(r=>r.json()).catch(()=>({})),
+      fetch('/api/achievements/stats').then(r=>r.json()).catch(()=>({})),
+      fetch('/api/weekly').then(r=>r.json()).catch(()=>({}))
+    ]);
+    const s1=document.getElementById('s1'); if(s1) s1.textContent=coins.length||0;
+    const s2=document.getElementById('s2'); if(s2) s2.textContent=ach.totalUnlocked||0;
+    const s3=document.getElementById('s3'); if(s3) s3.textContent=games.totalGamesToday||0;
+    const s4=document.getElementById('s4'); if(s4) s4.textContent=weekly.participantCount||0;
+    const ovCoins=document.getElementById('ov-coins'); if(ovCoins) ovCoins.innerHTML=(coins||[]).slice(0,5).map((u,i)=>'<div class="flex justify-between items-center py-1 border-b border-white/5 text-sm"><span>'+(m[i]||'<span class="text-white/40">#'+(i+1)+'</span>')+' '+uname(u.userId)+'</span><span class="text-yellow-400 font-bold">'+(u.balance||0).toLocaleString()+'</span></div>').join('')||'<p class="text-white/40 text-sm">Keine Daten</p>';
+    const ovXp=document.getElementById('ov-xp'); if(ovXp) ovXp.innerHTML=(xp||[]).slice(0,5).map((u,i)=>'<div class="flex justify-between items-center py-1 border-b border-white/5 text-sm"><span>'+(m[i]||'<span class="text-white/40">#'+(i+1)+'</span>')+' '+uname(u.userId)+'</span><span class="text-purple-400 font-bold">Lv.'+u.level+'</span></div>').join('')||'<p class="text-white/40 text-sm">Keine Daten</p>';
+    const gd=games.byGame||{};
+    const ovGames=document.getElementById('ov-games'); if(ovGames) ovGames.innerHTML=Object.entries(gd).length?Object.entries(gd).map(([g,n])=>'<div class="flex justify-between items-center py-1 border-b border-white/5 text-sm"><span class="text-white/60 capitalize">'+g+'</span><span class="font-bold text-white">'+n+'</span></div>').join(''):'<p class="text-white/40 text-sm">Noch keine Spiele</p>';
+  };
+  await render();
+  if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}
+  _refreshTimer=setInterval(render, 10000);
+  _refreshActive=true;
+},
+
+coins: async()=>{
+  window._coinsData=[];
+  document.getElementById('content').innerHTML=h2t('💰 Coins Rangliste')
+    +'<div class="flex gap-2 mb-3"><button id="refreshBtn" onclick="startRefresh(null,\'coins\')" class="btn btn-gray text-xs">🔄 Auto-Refresh</button><button onclick="exportCoinsCSV()" class="btn btn-gray text-xs">📥 CSV</button></div>'
+    +'<div class="tbl-search"><input class="inp text-sm" placeholder="🔍 Suchen…" oninput="document.querySelectorAll(\'#content tbody tr\').forEach(tr=>{const t=tr.textContent.toLowerCase();tr.style.display=t.includes(this.value.toLowerCase())?\'\':\'none\';})"/></div>'
+    +card(tbl(['#','Name','Coins'],'<tr><td colspan="3" class="text-white/60">'+skeleton(1)+'</td></tr>'));
+  window._coinsData=await fetch('/api/leaderboard/coins').then(r=>r.json()).catch(()=>[]);
+  document.querySelector('#content tbody').innerHTML=window._coinsData.map((u,i)=>row([i+1,uname(u.userId),'<span class="text-yellow-400 font-bold">'+(u.balance||0).toLocaleString()+'</span>'])).join('');
+},
+
+xp: async()=>{
+  window._xpData=[];
+  document.getElementById('content').innerHTML=h2t('⭐ XP Rangliste')
+    +'<div class="flex gap-2 mb-4" style="max-width:350px"><input id="xp-lookup-id" placeholder="Discord User ID" class="inp"><button onclick="lookupXp()" class="btn btn-blue">Eigenes Lvl abfragen</button></div>'
+    +'<div id="xp-lookup-result"></div>'
+    +'<div class="flex gap-2 mb-3"><button onclick="exportXpCSV()" class="btn btn-gray text-xs">📥 CSV</button></div>'
+    +'<div class="tbl-search"><input class="inp text-sm" placeholder="🔍 Suchen…" oninput="document.querySelectorAll(\'#content tbody tr\').forEach(tr=>{const t=tr.textContent.toLowerCase();tr.style.display=t.includes(this.value.toLowerCase())?\'\':\'none\';})"/></div>'
+    +card(tbl(['#','Name','Level','XP','Prestige'],'<tr><td colspan="5">'+skeleton(1)+'</td></tr>'));
+  window._xpData=await fetch('/api/leaderboard/xp').then(r=>r.json()).catch(()=>[]);
+  document.querySelector('#content tbody').innerHTML=window._xpData.map((u,i)=>row([i+1,uname(u.userId),'<span class="text-blue-400 font-bold">'+u.level+'</span>',(u.xp||0).toLocaleString(),u.prestige>0?'<span style="background:#f0b13233;color:#f0b132;padding:1px 8px;border-radius:99px;font-size:.75rem">⭐ '+u.prestige+'</span>':'—'])).join('');
+},
+
+xpPrestige: async()=>{
+  document.getElementById('content').innerHTML=h2t('🏆 XP Prestige')
+    +'<div class="grid gap-4 mb-6" style="grid-template-columns:repeat(6,1fr)">'
+    +[1,2,3,4,5].map(i=>'<div class="card text-center"><p class="text-2xl font-bold text-[#f0b132]" id="pp-'+i+'">…</p><p class="text-white/60 text-xs mt-1">Prestige '+i+'</p></div>').join('')
+    +'<div class="card text-center"><p class="text-2xl font-bold text-white" id="pp-total">…</p><p class="text-white/60 text-xs mt-1">Gesamt</p></div>'
+    +'</div>'
+    +card(tbl(['#','Name','Prestige','Level','XP','Aktion'],'<tr id="prr"><td colspan="6" class="text-white/60">Laden…</td></tr>'));
+  const d=await fetch('/api/xp/prestige/leaderboard').then(r=>r.json()).catch(()=>({users:[], distribution:{}, total:0}));
+  [1,2,3,4,5].forEach(i=>{const el=document.getElementById('pp-'+i);if(el)el.textContent=(d.distribution||{})[i]||0;});
+  document.getElementById('pp-total').textContent=d.total||0;
+  const rows=(d.users||[]).map((u,i)=>row([
+    i+1,uname(u.userId),'<span style="background:#f0b13233;color:#f0b132;padding:2px 10px;border-radius:99px;font-weight:bold;font-size:.875rem">⭐ '+u.prestige+'</span>',
+    '<span class="text-blue-400 font-bold">'+u.level+'</span>',(u.xp||0).toLocaleString(),
+    '<button onclick="editPrestige(\''+u.userId+'\','+u.prestige+')" class="btn btn-gray text-xs">✏️</button>'
+  ])).join('');
+  document.querySelector('#content tbody').innerHTML=rows||'<tr><td colspan="6" class="text-center text-white/60 py-4">Keine Prestige-Nutzer</td></tr>';
+},
+
+zahlen: ()=>{
+  document.getElementById('content').innerHTML=h2t('🔢 Zahlen-Spiel')
+    +'<div class="flex gap-2 mb-4"><input id="z-guild" placeholder="Guild ID (leer=Hauptserver)" class="inp" style="max-width:300px"><button onclick="loadZahlen()" class="btn btn-blue">Laden</button></div>'
+    +card(tbl(['#','Name','✅ Richtig','❌ Fehler','💰 Coins'],'<tr><td colspan="5" class="text-white/60">Klick Laden…</td></tr>'));
+},
+
+economy: async()=>{
+  document.getElementById('content').innerHTML=h2t('⚙️ Economy Einstellungen')+card('<div id="eco-form" style="max-width:400px">Laden…</div>');
+  const d=await fetch('/api/settings/economy').then(r=>r.json()).catch(()=>({}));
+  const fields=[['messageReward','Coins pro Nachricht'],['messageRewardInterval','Nachrichten-Intervall'],['voiceRewardPerMinute','Coins/Voice-Minute'],['payMaxAmountPerTransfer','Max Coins/Überweisung'],['payMaxAmountPerDay','Max Coins/Tag'],['payMaxReceivedPerWeek','Max empfangen/Woche']];
+  document.getElementById('eco-form').innerHTML=fields.map(([k,l])=>'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">'+l+'</label><input id="ec-'+k+'" type="number" value="'+(d[k]??'')+'" class="inp"/></div>').join('')+'<button onclick="saveEconomy()" class="btn btn-green">💾 Speichern</button>';
+},
+
+xpConfig: async()=>{
+  document.getElementById('content').innerHTML=h2t('📈 XP Konfiguration')+card('<div id="xpc-form" style="max-width:400px">Laden…</div>');
+  const d=await fetch('/api/settings/xpconfig').then(r=>r.json()).catch(()=>({}));
+  const keys=Object.keys(d).filter(k=>typeof d[k]==='number'||typeof d[k]==='boolean');
+  if(!keys.length){document.getElementById('xpc-form').innerHTML='<p class="text-white/60">Keine XP-Config gefunden.</p>';return;}
+  document.getElementById('xpc-form').innerHTML=keys.map(k=>'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">'+k+'</label><input id="xpc-'+k+'" type="'+(typeof d[k]==='boolean'?'checkbox':'number')+'" '+(typeof d[k]==='boolean'?(d[k]?'checked':''):'value="'+d[k]+'"')+' class="inp"/></div>').join('')+'<button onclick="saveXpConfig()" class="btn btn-green">💾 Speichern</button>';
+},
+
+xpBooster: async()=>{
+  document.getElementById('content').innerHTML=h2t('⚡ XP Booster')+card('<div id="xpb-form" style="max-width:400px">Laden…</div>');
+  const d=await fetch('/api/xp/multiplier').then(r=>r.json()).catch(()=>({multiplier:1,startAt:null,endAt:null,reason:""}));
+  const isActive = d.multiplier > 1 && new Date().getTime() >= new Date(d.startAt||0).getTime() && (!d.endAt || new Date().getTime() <= new Date(d.endAt).getTime());
+  document.getElementById('xpb-form').innerHTML=
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Status</label><p class="font-bold '+(isActive?'text-green-400':'text-white/60')+'">'+(isActive?'🔥 Aktiv: '+d.multiplier+'x XP':'⏸️ Inaktiv')+'</p></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Multiplier (z. B. 2 für doppeltes XP)</label><input id="xpb-multiplier" type="number" min="1" step="0.1" value="'+(d.multiplier>1?d.multiplier:2)+'" class="inp"/></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Start (Berlin-Zeit, optional)</label><input id="xpb-start" type="datetime-local" value="'+(d.startAt?toLocalDateTime(d.startAt):'')+'" class="inp"/></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Ende (Berlin-Zeit, optional)</label><input id="xpb-end" type="datetime-local" value="'+(d.endAt?toLocalDateTime(d.endAt):'')+'" class="inp"/></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Grund / Event</label><input id="xpb-reason" type="text" value="'+(d.reason||'')+'" class="inp"/></div>'
+    +'<div class="flex gap-2"><button onclick="saveXpBooster()" class="btn btn-green">💾 Speichern</button><button onclick="clearXpBooster()" class="btn btn-red">🗑️ Zurücksetzen</button></div>';
+},
+
+kartenSettings: async()=>{
+  document.getElementById('content').innerHTML=h2t('🗺️ Karten Config')+card('<div id="karten-form" style="max-width:500px">Laden…</div>');
+  const d=await fetch('/api/settings/karten').then(r=>r.json()).catch(()=>({}));
+  document.getElementById('karten-form').innerHTML=
+    '<div class="mb-4"><label class="flex items-center gap-3 cursor-pointer"><input id="ks-createThread" type="checkbox" '+(d.createThread?'checked':'')+' class="w-4 h-4 accent-blue-500"><span class="text-white/80">Thread für neue Bestellungen erstellen</span></label></div>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Main: Forum-Channel ID</label><input id="ks-mainForumChannelId" type="text" value="'+(d.mainForumChannelId||'')+'" class="inp"/></div>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Test: Forum-Channel ID</label><input id="ks-testForumChannelId" type="text" value="'+(d.testForumChannelId||'')+'" class="inp"/></div>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Main: Ping-Rollen ID</label><input id="ks-mainPingRoleId" type="text" value="'+(d.mainPingRoleId||'')+'" class="inp"/></div>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Test: Ping-Rollen ID</label><input id="ks-testPingRoleId" type="text" value="'+(d.testPingRoleId||'')+'" class="inp"/></div>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Fallback-Channel ID (wenn kein Thread erstellt wird)</label><input id="ks-notificationChannelId" type="text" value="'+(d.notificationChannelId||'')+'" class="inp"/></div>'+
+    '<hr class="border-white/10 my-4"/>'+
+    '<p class="text-white/60 text-sm mb-3">Max. Kartengröße (0 = unbegrenzt)</p>'+
+    '<div class="flex gap-3 mb-3"><div class="flex-1"><label class="text-sm text-white/60 block mb-1">Max Breite (X)</label><input id="ks-maxMapSizeX" type="number" min="0" value="'+(d.maxMapSizeX||0)+'" class="inp"/></div>'+
+    '<div class="flex-1"><label class="text-sm text-white/60 block mb-1">Max Höhe (Y)</label><input id="ks-maxMapSizeY" type="number" min="0" value="'+(d.maxMapSizeY||0)+'" class="inp"/></div></div>'+
+    '<button onclick="saveKartenSettings()" class="btn btn-green">💾 Speichern</button>';
+},
+
+kartenOrders: async()=>{
+  document.getElementById('content').innerHTML=h2t('📦 Karten Bestellungen')+card('<div id="ko-list">Laden…</div>');
+  const orders=await fetch('/api/karten/orders').then(r=>r.json()).catch(()=>[]);
+  const statusBadge=(s)=>{
+    const colors={pending:'text-yellow-400',waiting_join:'text-orange-400',created:'text-green-400',error:'text-red-400'};
+    return '<span class="font-bold '+(colors[s]||'text-white/60')+'">'+(s||'—')+'</span>';
+  };
+  document.getElementById('ko-list').innerHTML=orders.length
+    ? tbl(['#','User','Art','Status','Erstellt','Aktionen'],orders.map(o=>row([
+      '#'+o.orderNumber,
+      '<span class="font-semibold text-white">'+(o.username||'—')+'</span> '+(o.memberId?'<span class="text-xs text-white/50">'+o.memberId+'</span>':''),
+      o.mapType,
+      statusBadge(o.status),
+      o.createdAt?new Date(o.createdAt).toLocaleString('de-DE'):'—',
+      '<div class="flex gap-1">'+(o.status==='error'||o.status==='waiting_join'?'<button onclick="resetKartenOrder(\''+o.id+'\')" class="btn btn-blue text-xs">↻ Reset</button>':'')+'<button onclick="deleteKartenOrder(\''+o.id+'\')" class="btn btn-red text-xs">🗑</button></div>'
+    ])))
+    :'<p class="text-white/60">Keine Bestellungen vorhanden.</p>';
+},
+
+builderOrders: async()=>{
+  document.getElementById('content').innerHTML=h2t('📦 Builder Bestellungen')+card('<div id="bo-list">Laden…</div>');
+  const orders=await fetch('/api/builder/orders').then(r=>r.json()).catch(()=>[]);
+  const statusBadge=(s)=>{
+    const colors={pending:'text-yellow-400',waiting_join:'text-orange-400',created:'text-green-400',error:'text-red-400'};
+    return '<span class="font-bold '+(colors[s]||'text-white/60')+'">'+(s||'—')+'</span>';
+  };
+  document.getElementById('bo-list').innerHTML=orders.length
+    ? tbl(['#','User','Bauwerk','Plot','Schematic','Status','Erstellt','Aktionen'],orders.map(o=>row([
+      '#'+o.orderNumber,
+      '<span class="font-semibold text-white">'+(o.username||'—')+'</span> '+(o.memberId?'<span class="text-xs text-white/50">'+o.memberId+'</span>':''),
+      o.buildType||'—',
+      o.plotSize||'—',
+      o.schematicAvailable?'Ja':'Nein',
+      statusBadge(o.status),
+      o.createdAt?new Date(o.createdAt).toLocaleString('de-DE'):'—',
+      '<div class="flex gap-1">'+(o.status==='error'||o.status==='waiting_join'?'<button onclick="resetBuilderOrder(\''+o.id+'\')" class="btn btn-blue text-xs">↻ Reset</button>':'')+'<button onclick="deleteBuilderOrder(\''+o.id+'\')" class="btn btn-red text-xs">🗑</button></div>'
+    ])))
+    :'<p class="text-white/60">Keine Builder-Bestellungen vorhanden.</p>';
+},
+
+builderJobs: async()=>{
+  document.getElementById('content').innerHTML=h2t('🔨 Builder Aufträge')+card('<div id="bj-list">Laden…</div>');
+  const jobs=await fetch('/api/builder/jobs').then(r=>r.json()).catch(()=>[]);
+  document.getElementById('bj-list').innerHTML=jobs.length
+    ? tbl(['ID','Kunde','Bauwerk','Plot','Preis','Max','Eingetragen','Erstellt','Aktionen'],jobs.map(j=>row([
+      '<span class="font-mono text-xs">'+j.id+'</span>',
+      '<span class="font-semibold text-white">'+(j.customerUsername||'—')+'</span>',
+      j.buildType||'—',
+      j.plotSize||'—',
+      j.totalPrice?j.totalPrice.toLocaleString('de-DE')+' Coins':'—',
+      j.maxBuilders||'—',
+      (j.builderUserIds||[]).length+'/'+j.maxBuilders,
+      j.createdAt?new Date(j.createdAt).toLocaleString('de-DE'):'—',
+      '<div class="flex gap-1"><button onclick="deleteBuilderJob(\''+j.id+'\')" class="btn btn-red text-xs">🗑</button></div>'
+    ])))
+    :'<p class="text-white/60">Keine Builder-Aufträge vorhanden.</p>';
+},
+
+absenceManagement: async()=>{
+  document.getElementById('content').innerHTML=h2t('📅 Abwesenheiten')+card('<div id="abs-list">Laden…</div>');
+  const entries=await fetch('/api/absences').then(r=>r.json()).catch(()=>[]);
+  document.getElementById('abs-list').innerHTML=entries.length
+    ? tbl(['User','Typ','Zeitraum','Grund','Erstellt','Aktion'],entries.map(e=>{
+      const isJoin=e.cancelled;
+      return row([
+        e.discordName||uname(e.userId),
+        isJoin?'<span class="text-green-400 font-bold">Anmeldung</span>':'<span class="text-red-400 font-bold">Abmeldung</span>',
+        (e.start?new Date(e.start).toLocaleDateString('de-DE'):'—')+' – '+(e.end?new Date(e.end).toLocaleDateString('de-DE'):'—'),
+        e.reason||'—',
+        e.createdAt?new Date(e.createdAt).toLocaleString('de-DE'):'—',
+        '<button onclick="acknowledgeAbsence(\''+e.id+'\',this)" class="btn btn-green text-xs">✅ Bestätigen + DM</button>'
+      ]);
+    }))
+    :'<p class="text-white/60">Keine Abwesenheiten vorhanden.</p>';
+},
+
+probezeitManagement: async()=>{
+  document.getElementById('content').innerHTML=h2t('⏳ Probezeit')+card('<div id="pz-list">Laden…</div>');
+  const list=await fetch('/api/probezeiten').then(r=>r.json()).catch(()=>[]);
+  const fmt=(ms)=>{
+    const s=Math.floor(ms/1000);
+    const d=Math.floor(s/86400);
+    const h=Math.floor((s%86400)/3600);
+    const m=Math.floor((s%3600)/60);
+    return d+'d '+h+'h '+m+'m';
+  };
+  document.getElementById('pz-list').innerHTML=(list.length?tbl(['User','Server','Zielrolle','Start','Ende','Rest','Aktionen'],list.map(p=>row([
+    uname(p.userId),
+    p.guildId,
+    p.zielrolleId,
+    p.start?new Date(p.start).toLocaleString('de-DE'):'—',
+    p.ende?new Date(p.ende).toLocaleString('de-DE'):'—',
+    fmt(p.remainingMs),
+    '<div class="flex gap-1"><button onclick="extendProbezeit(\''+p.id+'\')" class="btn btn-blue text-xs">+ Verlängern</button><button onclick="deleteProbezeit(\''+p.id+'\')" class="btn btn-red text-xs">🗑</button></div>'
+  ]))):'<p class="text-white/60">Keine aktiven Probezeiten.</p>')+
+    '<div class="mt-6 pt-4 border-t border-white/10"><h3 class="font-bold text-white mb-3">Neue Probezeit starten</h3>'+
+    '<div class="grid gap-3" style="grid-template-columns:1fr 1fr">'+
+    '<div><label class="text-sm text-white/60 block mb-1">User ID</label><input id="pz-user" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Guild ID</label><input id="pz-guild" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Dauer (z. B. 7d)</label><input id="pz-dauer" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Zielrollen-ID</label><input id="pz-role" class="inp"/></div>'+
+    '</div>'+
+    '<button onclick="addProbezeit()" class="btn btn-green mt-3">➕ Starten</button></div>';
+},
+
+dailyRewards: async()=>{
+  document.getElementById('content').innerHTML=h2t('🎁 Daily Rewards')+card('<div id="dr-form">Laden…</div>');
+  const [cfg,stats]=await Promise.all([fetch('/api/daily-rewards/config').then(r=>r.json()).catch(()=>({})),fetch('/api/daily-rewards/stats').then(r=>r.json()).catch(()=>({}))]);
+  document.getElementById('dr-form').innerHTML=
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">'+
+    '<div class="text-center"><p class="text-2xl font-bold text-blue-400">'+(stats.totalUsers||0)+'</p><p class="text-xs text-white/60">Teilnehmer</p></div>'+
+    '<div class="text-center"><p class="text-2xl font-bold text-green-400">'+(stats.totalClaims||0)+'</p><p class="text-xs text-white/60">Claims</p></div>'+
+    '<div class="text-center"><p class="text-2xl font-bold text-yellow-400">'+(stats.todayClaims||0)+'</p><p class="text-xs text-white/60">Heute</p></div>'+
+    '<div class="text-center"><p class="text-2xl font-bold text-purple-400">'+(stats.topStreak||0)+'</p><p class="text-xs text-white/60">Top Streak</p></div>'+
+    '</div>'+
+    '<div class="grid gap-3" style="grid-template-columns:1fr 1fr">'+
+    '<div><label class="text-sm text-white/60 block mb-1">Min. Coins</label><input id="dr-min" type="number" value="'+(cfg.dailyMin||25)+'" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Max. Coins</label><input id="dr-max" type="number" value="'+(cfg.dailyMax||150)+'" class="inp"/></div>'+
+    '</div>'+
+    '<div class="flex gap-2 mt-4"><button onclick="saveDailyRewards()" class="btn btn-green">💾 Speichern</button><button onclick="resetDailyRewards()" class="btn btn-red">🗑️ Reset</button></div>';
+},
+
+publicShop: async()=>{
+  document.getElementById('content').innerHTML=h2t('🛍️ Public Shop')+card('<div id="ps-list">Laden…</div>');
+  const d=await fetch('/api/public-shop').then(r=>r.json()).catch(()=>({categories:[],items:[]}));
+  const cats=(d.categories||[]).map(c=>c.id).join(',');
+  document.getElementById('ps-list').innerHTML=(d.items||[]).length
+    ? tbl(['ID','Name','Kategorie','Preis','Typ','Aktiv','Aktionen'],d.items.map(i=>row([
+      i.id,
+      i.name,
+      i.category,
+      '<span class="text-yellow-400 font-bold">'+(i.price||0)+'</span>',
+      i.type||'—',
+      i.active!==false?'✅':'❌',
+      '<div class="flex gap-1"><button onclick="editPublicShopItem(decodeURIComponent(\''+encodeURIComponent(JSON.stringify(i))+'\'))" class="btn btn-gray text-xs">✏️</button><button onclick="deletePublicShopItem(\''+i.id+'\')" class="btn btn-red text-xs">🗑</button></div>'
+    ])))
+    :'<p class="text-white/60">Keine Public-Shop Items.</p>';
+  document.getElementById('content').innerHTML+=card(
+    '<h3 class="font-bold text-white mb-3">Neues Item hinzufügen</h3>'+
+    '<div class="grid gap-3" style="grid-template-columns:1fr 1fr">'+
+    '<div><label class="text-sm text-white/60 block mb-1">ID</label><input id="ps-id" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Name</label><input id="ps-name" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Kategorie</label><input id="ps-cat" class="inp" placeholder="'+cats+'"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Preis</label><input id="ps-price" type="number" class="inp"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Typ</label><input id="ps-type" class="inp" placeholder="generic / Discord Role"/></div>'+
+    '<div><label class="text-sm text-white/60 block mb-1">Rollen-ID (nur bei Discord Role)</label><input id="ps-role" class="inp"/></div>'+
+    '</div>'+
+    '<div class="mt-3"><label class="text-sm text-white/60 block mb-1">Beschreibung</label><input id="ps-desc" class="inp"/></div>'+
+    '<button onclick="addPublicShopItem()" class="btn btn-green mt-3">➕ Hinzufügen</button>'
+  );
+},
+
+orderLimits: async()=>{
+  document.getElementById('content').innerHTML=h2t('📊 Auftrags-Limits')+card('<div id="ol-form" style="max-width:500px">Laden…</div>');
+  const d=await fetch('/api/settings/order-limits').then(r=>r.json()).catch(()=>({}));
+  document.getElementById('ol-form').innerHTML=
+    '<p class="text-white/60 text-sm mb-4">Maximale Anzahl gleichzeitig aktiver Aufträge. <b>0 = unbegrenzt</b>. Ein Platz wird automatisch frei, wenn ein Auftrag per /closerequest geschlossen wird.</p>'+
+    '<div class="mb-4"><label class="text-sm text-white/60 block mb-1">🗺️ Karten-Limit</label><input id="ol-karten" type="number" min="0" value="'+(d.kartenLimit||0)+'" class="inp"/><span class="text-xs text-white/40 ml-2">Aktuell aktiv: '+(d.kartenActive||0)+'</span></div>'+
+    '<div class="mb-4"><label class="text-sm text-white/60 block mb-1">🔨 Builder-Limit</label><input id="ol-builder" type="number" min="0" value="'+(d.builderLimit||0)+'" class="inp"/><span class="text-xs text-white/40 ml-2">Aktuell aktiv: '+(d.builderActive||0)+'</span></div>'+
+    '<button onclick="saveOrderLimits()" class="btn btn-green">💾 Speichern</button>';
+},
+
+restartManager: async()=>{
+  const rmPages=[{id:'home',name:'Home'},{id:'profile',name:'Profile'},{id:'karten',name:'Karten'},{id:'builder',name:'Bauauftr\u00e4ge'},{id:'status',name:'Status'}];
+  document.getElementById('content').innerHTML=h2t('\ud83d\udd04 Restart Manager')
+    +'<div id="rm-lock" style="display:none;align-items:center;gap:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 18px;margin-bottom:20px;color:#f59e0b;font-weight:600">\u231b Neustart l\u00e4uft \u2013 bitte warten\u2026</div>'
+    +'<div id="rm-content">'
+    +'<div class="grid gap-4 mb-4" style="grid-template-columns:1fr 1fr">'
+    +card('<h3 class="font-bold text-white mb-3">\ud83c\udf10 Website</h3><div class="mb-3" id="rm-ws-status"></div>'
+      +'<div class="grid gap-2 mb-4" style="grid-template-columns:repeat(3,1fr)">'
+      +'<div><p class="text-xs text-white/50">Antwortzeit</p><p class="font-bold text-[#4DA3FF]" id="rm-ws-rt">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">CPU</p><p class="font-bold text-purple-400" id="rm-ws-cpu">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">RAM</p><p class="font-bold text-purple-400" id="rm-ws-ram">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">Uptime</p><p class="font-bold text-green-400" id="rm-ws-uptime">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">Letzter Neustart</p><p class="font-bold text-white/70 text-xs" id="rm-ws-restart">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">Fehler</p><p class="font-bold text-red-400 text-xs" id="rm-ws-err">\u2014</p></div>'
+      +'</div><div class="flex gap-2 flex-wrap">'
+      +'<button onclick="rmAction(\'/website/start\',\'dashboard\')" class="btn btn-green text-xs">\u25b6 Starten</button>'
+      +'<button onclick="rmAction(\'/website/stop\',\'dashboard\')" class="btn btn-red text-xs">\u25a0 Stoppen</button>'
+      +'<button onclick="rmAction(\'/website/restart\',\'dashboard\')" class="btn btn-blue text-xs">\u21bb Neustart</button>'
+      +'</div>')
+    +card('<h3 class="font-bold text-white mb-3">\ud83e\udd16 Discord Bot</h3><div class="mb-3" id="rm-bot-status"></div>'
+      +'<div class="grid gap-2 mb-4" style="grid-template-columns:repeat(3,1fr)">'
+      +'<div><p class="text-xs text-white/50">CPU</p><p class="font-bold text-purple-400" id="rm-bot-cpu">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">RAM</p><p class="font-bold text-purple-400" id="rm-bot-ram">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">Uptime</p><p class="font-bold text-green-400" id="rm-bot-uptime">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">Letzter Neustart</p><p class="font-bold text-white/70 text-xs" id="rm-bot-restart">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">PID</p><p class="font-bold text-[#4DA3FF]" id="rm-bot-pid">\u2014</p></div>'
+      +'<div><p class="text-xs text-white/50">Fehler</p><p class="font-bold text-red-400 text-xs" id="rm-bot-err">\u2014</p></div>'
+      +'</div><div class="flex gap-2 flex-wrap">'
+      +'<button onclick="rmAction(\'/bot/start\',\'dashboard\')" class="btn btn-green text-xs">\u25b6 Starten</button>'
+      +'<button onclick="rmAction(\'/bot/stop\',\'dashboard\')" class="btn btn-red text-xs">\u25a0 Stoppen</button>'
+      +'<button onclick="rmAction(\'/bot/restart\',\'dashboard\')" class="btn btn-blue text-xs">\u21bb Neustart</button>'
+      +'</div>')
+    +'</div>'
+    +card('<h3 class="font-bold text-white mb-3">\u26a0\ufe0f Globaler Offline-Modus</h3>'
+      +'<div class="flex items-center gap-3 mb-3"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="rm-global-offline" style="width:18px;height:18px;accent-color:#ef4444"><span class="text-white/80 font-semibold">Gesamte Website offline schalten</span></label></div>'
+      +'<div class="mb-3"><label class="text-xs text-white/50 block mb-1">Grund</label><input id="rm-global-reason" class="inp" style="max-width:400px" placeholder="z.B. Serverarbeiten"/></div>'
+      +'<button onclick="rmSetGlobalOffline()" class="btn btn-red text-sm">\ud83d\udd34 Offline-Status setzen</button>')
+    +card('<h3 class="font-bold text-white mb-3">\ud83d\udccc Einzelne Seiten offline</h3>'
+      +'<div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">'
+      +rmPages.map(p=>'<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px">'
+        +'<div class="flex items-center justify-between mb-2"><span class="font-semibold text-white">'+p.name+'</span>'
+        +'<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="rm-page-'+p.id+'" style="accent-color:#ef4444"><span class="text-xs text-white/60">Offline</span></label></div>'
+        +'<input id="rm-pagereason-'+p.id+'" class="inp text-xs" style="padding:6px 10px" placeholder="Grund (optional)"/>'
+        +'<button onclick="rmSetPageOffline(\''+p.id+'\')" class="btn btn-gray text-xs mt-2">Setzen</button></div>').join('')
+      +'</div>')
+    +card('<h3 class="font-bold text-white mb-3">\u26a1 Schnellaktionen</h3>'
+      +'<div class="flex gap-2 flex-wrap mb-4">'
+      +'<button onclick="rmAction(\'/restart-all\',\'dashboard\')" class="btn btn-blue">\ud83d\udd04 Alle neu starten</button>'
+      +'<button onclick="rmAction(\'/cache/clear\',\'dashboard\')" class="btn btn-gray">\ud83d\uddd1\ufe0f Cache l\u00f6schen</button>'
+      +'<button onclick="rmLoadStatus()" class="btn btn-gray">\u21bb Status aktualisieren</button>'
+      +'<a href="/status/" target="_blank" class="btn btn-gray">\ud83d\udcca Status-Seite \u2197</a>'
+      +'</div>'
+      +'<div style="border-top:1px solid rgba(255,255,255,.08);padding-top:14px">'
+      +'<p class="text-xs text-white/40 mb-2 font-semibold uppercase tracking-wider">🧪 Crash-Simulation (nur zum Testen)</p>'
+      +'<div class="flex gap-2 flex-wrap">'
+      +'<button onclick="rmCrash(\'website\')" class="btn btn-red text-xs" style="opacity:.75">\ud83d\udca5 Website crashen</button>'
+      +'<button onclick="rmCrash(\'bot\')" class="btn btn-red text-xs" style="opacity:.75">\ud83d\udca5 Bot crashen</button>'
+      +'</div>'
+      +'<p class="text-xs text-white/30 mt-2">Beendet den Prozess via SIGKILL. Auto-Restart startet ihn neu.</p>'
+      +'</div>')
+    +'</div>';
+  await rmLoadStatus();
+  if(_refreshTimer)clearInterval(_refreshTimer);
+  _refreshTimer=setInterval(rmLoadStatus,15000);
+  _refreshActive=true;
+},
+
+siteLock: async()=>{
+  document.getElementById('content').innerHTML=
+    h2t('🔒 Website-Sperre')+
+    '<div class="grid gap-4" style="grid-template-columns:1fr 1fr;max-width:900px">'+
+    card('<div id="sl-status-card">Laden…</div>')+
+    card('<div id="sl-config-card">Laden…</div>')+
+    '</div>';
+  await loadSiteLock();
+},
+
+websiteDesign: async()=>{
+  document.getElementById('content').innerHTML=h2t('🎨 Website-Design')+card(
+    '<p class="text-white/60 text-sm mb-4">Wähle ein saisonales Design aus. Das Design gilt global für alle Besucher der Website.</p>'
+    +'<div id="wd-buttons" class="flex flex-wrap gap-3">Laden…</div>'
+    +'<p id="wd-status" class="text-white/60 text-sm mt-4"></p>'
+  );
+
+  const themeMeta={
+    standard: {label:'🎨 Standard', desc:'Keine saisonalen Dekorationen'},
+    easter: {label:'🥚 Ostern', desc:'Ostereier, Blumen, Osterkörbe'},
+    halloween: {label:'🎃 Halloween', desc:'Kürbisse, Kerzen, Spinnweben, Nebel'},
+    christmas: {label:'🎄 Weihnachten', desc:'Schneefall, Geschenke, Lichterketten'}
+  };
+
+  const [themesRes, currentRes] = await Promise.all([
+    fetch('/api/themes').then(r=>r.json()).catch(()=>({themes:Object.keys(themeMeta)})),
+    fetch('/api/theme').then(r=>r.json()).catch(()=>({activeTheme:'standard'}))
+  ]);
+
+  const themes = (themesRes.themes || []).map(id=>{
+    const meta=themeMeta[id] || {label:'🎨 '+id, desc:'Benutzerdefiniertes Theme'};
+    return {id, ...meta};
+  });
+
+  document.getElementById('wd-buttons').innerHTML=themes.map(t=>{
+    const active=t.id===currentRes.activeTheme;
+    return '<button onclick="setWebsiteDesign(\''+t.id+'\')" class="btn '+(active?'btn-green':'btn-blue')+'" style="min-width:160px;text-align:left">'
+      +'<div class="font-bold">'+t.label+'</div>'
+      +'<div class="text-xs text-white/70 font-normal">'+t.desc+'</div>'
+      +'</button>';
+  }).join('');
+},
+
+userEdit: ()=>{
+  document.getElementById('content').innerHTML=h2t('👤 User bearbeiten')+card(
+    '<div class="flex gap-2 mb-4" style="max-width:350px"><input id="u-id" placeholder="Discord User ID" class="inp"><button onclick="loadUserEdit()" class="btn btn-blue">Suchen</button></div>'
+    +'<div id="u-result" style="display:none;max-width:350px">'
+    +'<div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:12px;margin-bottom:12px"><p class="text-xs text-white/60">User</p><p id="u-name" class="font-bold text-white mt-1"></p><p class="text-xs text-white/60 mt-2">Level / XP / Prestige</p><p id="u-stats" class="text-sm text-white/80"></p></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Coins</label><div class="flex gap-2"><input id="u-coins" type="number" class="inp"><button onclick="saveUserCoins()" class="btn btn-green">Speichern</button></div></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">XP</label><div class="flex gap-2"><input id="u-xp" type="number" class="inp"><button onclick="saveUserXp()" class="btn btn-green">Speichern</button></div></div>'
+    +'<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Prestige (0-5)</label><div class="flex gap-2"><input id="u-prestige" type="number" min="0" max="5" class="inp"><button onclick="saveUserPrestige()" class="btn btn-green">Speichern</button></div></div>'
+    +'</div>'
+  );
+},
+
+blacklist: ()=>{
+  document.getElementById('content').innerHTML=h2t('🚫 Leaderboard Blacklist')+card(
+    '<div class="flex gap-2 mb-4" style="max-width:350px"><input id="bl-in" placeholder="User ID hinzufügen" class="inp"><button onclick="addBlacklist()" class="btn btn-red">Hinzufügen</button></div>'
+    +'<div id="bl-list">Laden…</div>'
+  );
+  loadBlacklist();
+},
+
+membersBlacklist: ()=>{
+  document.getElementById('content').innerHTML=h2t('🚫 Mitglieder Blacklist')+card(
+    '<p class="text-white/60 text-sm mb-4">User auf dieser Liste werden nicht mehr auf der <a href="/mitglieder" class="text-blue-400 hover:underline">Mitglieder-Seite</a> angezeigt.</p>'
+    +'<div class="flex gap-2 mb-4" style="max-width:350px"><input id="mbl-in" placeholder="User ID hinzufügen" class="inp"><button onclick="addMembersBlacklist()" class="btn btn-red">Hinzufügen</button></div>'
+    +'<div id="mbl-list">Laden…</div>'
+  );
+  loadMembersBlacklist();
+},
+
+weekly: async()=>{
+  if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}
+  _refreshActive=false;
+  const renderWeekly=async()=>{
+    const d=await fetch('/api/weekly').then(r=>r.json()).catch(()=>({}));
+    const c=d.campaign;
+    const el=document.getElementById('w-info');
+    if(!el)return;
+    if(!c){el.innerHTML='<p class="text-white/60">Keine aktive Weekly-Mission</p>';return;}
+    const mission=c.selectedMissionMeta||{};
+    const total=d.totalProgress?.[c.selectedMissionId]||0;
+    const target=mission.target||1;
+    const pct=Math.min(100,Math.floor((total/target)*100));
+    const filled=Math.floor(pct/5);
+    const bar='█'.repeat(filled)+'░'.repeat(20-filled);
+    const diffColor={'Leicht':'text-green-400','Mittel':'text-blue-400','Extrem':'text-red-400','Spezial':'text-purple-400'}[mission.difficulty]||'text-yellow-400';
+    const contributors=d.contributors||[];
+    const medalColors=['color:#fde047','color:#d1d5db','color:#d97706'];
+    const medals=['🥇','🥈','🥉'];
+    const contribRows=contributors.length
+      ?'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+        +'<thead><tr>'
+        +'<th style="text-align:left;padding:4px 8px;color:rgba(255,255,255,0.4);font-weight:normal">#</th>'
+        +'<th style="text-align:left;padding:4px 8px;color:rgba(255,255,255,0.4);font-weight:normal">Name</th>'
+        +'<th style="text-align:right;padding:4px 8px;color:rgba(255,255,255,0.4);font-weight:normal">Beitrag</th>'
+        +'<th style="text-align:right;padding:4px 8px;color:rgba(255,255,255,0.4);font-weight:normal">Anteil</th>'
+        +'</tr></thead><tbody>'
+        +contributors.map((u,i)=>{
+          const share=total>0?Math.round((u.contribution/total)*100):0;
+          const medal=i<3?medals[i]:(i+1)+'.';
+          const nameColor=i<3?medalColors[i]:'color:rgba(255,255,255,0.85)';
+          return '<tr style="border-top:1px solid rgba(255,255,255,0.06)">'
+            +'<td style="padding:5px 8px;color:rgba(255,255,255,0.5)">'+medal+'</td>'
+            +'<td style="padding:5px 8px;font-weight:'+(i===0?'bold':'normal')+';'+nameColor+'">'+u.name+'</td>'
+            +'<td style="padding:5px 8px;text-align:right;color:#fff;font-weight:bold">'+u.contribution.toLocaleString('de-DE')+'</td>'
+            +'<td style="padding:5px 8px;text-align:right;color:rgba(255,255,255,0.5)">'+share+'%</td>'
+            +'</tr>';
+        }).join('')
+        +'</tbody></table>'
+      :'<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0">Noch keine Beiträge</p>';
+    el.innerHTML='<div class="space-y-3">'
+      +'<div class="flex justify-between"><span class="text-white/60">Mission</span><span class="font-bold text-white">'+(mission.name||c.campaignId||'—')+'</span></div>'
+      +'<div class="flex justify-between"><span class="text-white/60">Schwierigkeit</span><span class="font-bold '+diffColor+'">'+(mission.difficulty||'—')+'</span></div>'
+      +'<div class="flex justify-between"><span class="text-white/60">Beschreibung</span><span class="text-white text-right" style="max-width:60%">'+(mission.description||'—')+'</span></div>'
+      +'<div class="flex justify-between"><span class="text-white/60">Kategorie</span><span class="text-white">'+(mission.category||'—')+'</span></div>'
+      +'<div class="flex justify-between"><span class="text-white/60">Teilnehmer</span><span class="text-green-400 font-bold">'+(d.participantCount||0)+'</span></div>'
+      +'<div class="flex justify-between"><span class="text-white/60">Start</span><span class="text-white">'+(c.weekStart?new Date(c.weekStart).toLocaleString('de-DE'):'—')+'</span></div>'
+      +'<hr style="border-color:rgba(255,255,255,0.1);margin:4px 0"/>'
+      +'<div>'
+        +'<div class="flex justify-between mb-1"><span class="text-white/60">Fortschritt</span><span class="font-bold text-white">'+total.toLocaleString('de-DE')+' / '+target.toLocaleString('de-DE')+'</span></div>'
+        +'<div style="font-family:monospace;color:#60a5fa;font-size:13px;letter-spacing:1px">'+bar+' '+pct+'%</div>'
+      +'</div>'
+      +'<hr style="border-color:rgba(255,255,255,0.1);margin:4px 0"/>'
+      +'<div>'
+        +'<p class="font-bold text-white mb-2" style="margin:0 0 8px">🏆 Beitrags-Ranking</p>'
+        +contribRows
+      +'</div>'
+      +'</div>';
+    const lbl=document.getElementById('w-lastupdate');
+    if(lbl)lbl.textContent='Zuletzt: '+new Date().toLocaleTimeString('de-DE');
+  };
+  document.getElementById('content').innerHTML=h2t('📅 Weekly Mission')
+    +'<div class="flex gap-2 mb-3 items-center"><button onclick="resetWeekly()" class="btn btn-red text-xs">🔄 Mission zurücksetzen</button><span class="text-white/40 text-xs ml-2" id="w-lastupdate"></span></div>'
+    +card('<div id="w-info">Laden…</div>');
+  await renderWeekly();
+  _refreshActive=true;
+  _refreshTimer=setInterval(renderWeekly,30000);
+},
+
+achievements: async()=>{
+  document.getElementById('content').innerHTML=h2t('🏆 Achievements')+'<div class="flex gap-2 mb-3"><button id="refreshBtn" onclick="startRefresh(null,\'achievements\')" class="btn btn-gray text-xs">🔄 Auto-Refresh</button></div>'+card(
+    '<div class="grid gap-4 mb-4" style="grid-template-columns:1fr 1fr"><div class="text-center"><p class="text-4xl font-bold text-yellow-400" id="ach-t">…</p><p class="text-white/60 mt-1">Freigeschaltet</p></div>'
+    +'<div class="text-center"><p class="text-4xl font-bold text-blue-400" id="ach-u">…</p><p class="text-white/60 mt-1">Nutzer</p></div></div>'
+    +'<hr style="border-color:rgba(255,255,255,0.1);margin:12px 0"/>'
+    +'<div class="flex gap-2" style="max-width:350px"><input id="ach-uid" placeholder="User ID" class="inp"><button onclick="loadUserAch()" class="btn btn-blue">Laden</button></div>'
+    +'<div id="ach-user" class="mt-4"></div>'
+  );
+  const d=await fetch('/api/achievements/stats').then(r=>r.json()).catch(()=>({}));
+  document.getElementById('ach-t').textContent=d.totalUnlocked||0;
+  document.getElementById('ach-u').textContent=d.userCount||0;
+},
+
+shop: ()=>{
+  document.getElementById('content').innerHTML=h2t('🛒 Shop')
+    +'<div class="flex gap-3 mb-4"><button onclick="loadShopItems()" class="btn btn-blue">📦 Artikel</button><button onclick="loadShopOrders()" class="btn btn-gray">📋 Bestellungen</button><button onclick="openShopItemForm(null)" class="btn btn-green">➕ Neu</button></div>'
+    +'<div id="shop-content">'+card('<p class="text-white/60">Wähle eine Ansicht</p>')+'</div>';
+},
+
+commands: async()=>{
+  document.getElementById('content').innerHTML=h2t('🔧 Commands Verwaltung')+card('<div id="cmd-list">Laden…</div>');
+  const d=await fetch('/api/commands').then(r=>r.json()).catch(()=>({}));
+  const cmds=Object.entries(d);
+  if(!cmds.length){document.getElementById('cmd-list').innerHTML='<p class="text-white/60">Keine Command-Einstellungen.</p>';return;}
+  document.getElementById('cmd-list').innerHTML=tbl(['Command','Status','Grund','Aktion'],
+    cmds.map(([name,s])=>row([
+      '<code class="text-purple-400">/'+name+'</code>',
+      s.active?'<span class="text-green-400 font-bold">✅ Aktiv</span>':'<span class="text-red-400 font-bold">❌ Deaktiviert</span>',
+      s.reason||'—',
+      '<button onclick="toggleCommand(\''+name+'\','+(!s.active)+')" class="btn '+(s.active?'btn-red':'btn-green')+' text-xs">'+(s.active?'Deaktivieren':'Aktivieren')+'</button>'
+    ])).join('')
+  );
+},
+
+miniGamesCooldown: async()=>{
+  document.getElementById('content').innerHTML=h2t('🎮 Mini-Games Cooldown')
+    +'<div class="flex gap-2 mb-4"><button onclick="sections.miniGamesCooldown()" class="btn btn-gray text-xs">🔄 Neu laden</button></div>'
+    +'<p class="text-white/60 text-sm mb-3">Tägliche Limits: Normal 1x, Hilfsbandit 2x, DHBT+ 4x pro Spiel</p>'
+    +card(tbl(['User','Spiel','Heute gespielt','Zuletzt gespielt','Aktion'],'<tr id="mgc-row"><td colspan="5" class="text-white/60">Laden…</td></tr>'));
+  const d=await fetch('/api/minigames/cooldown').then(r=>r.json()).catch(()=>({users:[]}));
+  const rows=(d.users||[]).map(u=>row([
+    uname(u.userId),
+    '<span class="capitalize text-blue-400 font-bold">'+u.game+'</span>',
+    '<span class="text-yellow-400 font-bold">'+u.count+'</span>',
+    u.lastPlayedAt?new Date(u.lastPlayedAt).toLocaleString('de-DE'):'—',
+    '<button onclick="resetMiniGameCooldown(\''+u.userId+'\')" class="btn btn-red text-xs">🔄 Reset</button>'
+  ])).join('');
+  document.querySelector('#content tbody').innerHTML=rows||'<tr><td colspan="5" class="text-center text-white/60 py-4">Keine aktiven Cooldowns</td></tr>';
+},
+
+dailyMissions: async()=>{
+  document.getElementById('content').innerHTML=h2t('📋 Daily Missions')+card('<div id="dm-stats">Laden…</div>');
+  const d=await fetch('/api/dailymissions/stats').then(r=>r.json()).catch(()=>({}));
+  document.getElementById('dm-stats').innerHTML='<div class="grid gap-4" style="grid-template-columns:1fr 1fr">'
+    +'<div class="text-center"><p class="text-4xl font-bold text-blue-400">'+(d.totalUsers||0)+'</p><p class="text-white/60 mt-1">Gesamt Nutzer</p></div>'
+    +'<div class="text-center"><p class="text-4xl font-bold text-green-400">'+(d.completedToday||0)+'</p><p class="text-white/60 mt-1">Heute abgeschlossen</p></div>'
+    +'</div>';
+},
+
+payHistory: async()=>{
+  document.getElementById('content').innerHTML=h2t('💸 Überweisungs-History')+card(tbl(['Von','An','Betrag','Grund','Zeit'],''));
+  const data=await fetch('/api/payhistory').then(r=>r.json()).catch(()=>[]);
+  document.querySelector('#content tbody').innerHTML=data.map(t=>row([
+    uname(t.senderId||'?'),uname(t.recipientId||'?'),
+    '<span class="text-yellow-400 font-bold">'+(t.amount||0).toLocaleString()+'</span>',
+    t.reason||'—',t.timestamp?new Date(t.timestamp).toLocaleString('de-DE'):'—'
+  ])).join('')||'<tr><td colspan="5" class="text-center text-white/60 py-4">Keine Daten</td></tr>';
+},
+
+voiceStats: async()=>{
+  document.getElementById('content').innerHTML=h2t('🎧 Voice Lifetime Coins')+card(tbl(['#','Name','Lifetime Coins'],''));
+  const data=await fetch('/api/voice/stats').then(r=>r.json()).catch(()=>[]);
+  document.querySelector('#content tbody').innerHTML=data.map((u,i)=>row([i+1,uname(u.userId),'<span class="text-purple-400 font-bold">'+(u.coins||0).toLocaleString()+'</span>'])).join('');
+},
+
+roleManagement: async()=>{
+  document.getElementById('content').innerHTML=h2t('👥 Rechteverwaltung')
+    +'<div class="grid gap-6" style="grid-template-columns:1fr 1fr">'
+    +card('<h3 class="font-bold text-white mb-4">👤 User-Interface Zugänge</h3><div id="rm-users">Laden…</div><hr style="border-color:rgba(255,255,255,0.1);margin:12px 0"/><h4 class="font-semibold text-white/80 mb-3">Rolle zuweisen</h4><input id="rm-uname" placeholder="Discord-Name" class="inp mb-2"/><select id="rm-urole" class="inp mb-3"><option value="">Rolle wählen…</option></select><button onclick="addDashboardUser()" class="btn btn-blue">Zuweisen</button>')
+    +card('<h3 class="font-bold text-white mb-4">🔑 Rollen & Berechtigungen</h3><div id="rm-roles">Laden…</div>')
+    +'</div>';
+  loadRoleManagement();
+},
+
+botStatus: async()=>{
+  document.getElementById('content').innerHTML=h2t('🖥️ Bot & Dashboard Status')
+    +'<div id="bs-grid" class="grid gap-4 mb-6" style="grid-template-columns:repeat(3,1fr)">Laden…</div>'
+    +card('<h3 class="font-bold text-white mb-3">📈 RAM Verlauf</h3><canvas id="ramChart" height="80"></canvas>');
+  const _ramHistory=[];
+  async function fetchStatus(){
+    const d=await fetch('/api/dashboard-metrics').then(r=>r.json()).catch(()=>({}));
+    _ramHistory.push(d.ramMB||0); if(_ramHistory.length>20)_ramHistory.shift();
+    document.getElementById('bs-grid').innerHTML=[
+      ['🟢 Dashboard','Online','text-green-400'],
+      ['⏱ Uptime',d.uptimeFormatted||'—','text-blue-400'],
+      ['💾 RAM',d.ramMB+'MB / Heap: '+d.heapMB+'MB','text-yellow-400'],
+      ['🔧 Node.js',d.nodeVersion||'—','text-purple-400'],
+      ['💻 Platform',d.platform||'—','text-white/80'],
+      ['📦 Version',d.botVersion||'—','text-white/80'],
+    ].map(([l,v,c])=>'<div class="card text-center"><p class="text-white/60 text-xs mb-1">'+l+'</p><p class="font-bold '+c+'">'+v+'</p></div>').join('');
+    const ctx=document.getElementById('ramChart');
+    if(ctx&&window.Chart){
+      if(window._ramChartInst)window._ramChartInst.destroy();
+      window._ramChartInst=new Chart(ctx,{type:'line',data:{labels:_ramHistory.map((_,i)=>i+1+''),datasets:[{label:'RAM (MB)',data:_ramHistory,borderColor:'#4DA3FF',backgroundColor:'#4DA3FF22',tension:.3,fill:true}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#ffffff80'}},x:{ticks:{color:'#ffffff80'}}}}});
+    }
+  }
+  fetchStatus();
+  if(_refreshTimer)clearInterval(_refreshTimer);
+  _refreshTimer=setInterval(fetchStatus,5000);
+},
+
+userSearch: ()=>{
+  document.getElementById('content').innerHTML=h2t('🔍 User Suche')
+    +card('<div class="flex gap-2 mb-4" style="max-width:400px"><input id="us-q" placeholder="Name oder ID suchen…" class="inp" oninput="doUserSearch()"/></div>'
+    +'<div id="us-results"></div>');
+},
+
+auditLog: async()=>{
+  document.getElementById('content').innerHTML=h2t('📜 Audit Log')
+    +'<div class="flex justify-between items-center mb-4"><p class="text-white/60 text-sm">Letzte 100 Aktionen im Dashboard</p><button onclick="sections.auditLog()" class="btn btn-gray text-xs">🔄 Neu laden</button></div>'
+    +card('<div id="audit-list">Laden…</div>');
+  const data=await fetch('/api/audit').then(r=>r.json()).catch(()=>[]);
+  const icons={'coins_edit':'💰','xp_edit':'⭐','prestige_edit':'🏆','xp_multiplier_set':'⚡','xp_multiplier_clear':'⚡','minigames_cooldown_reset':'🎮','weekly_reset':'📅','shop_item_save':'🛒','shop_item_delete':'🗑','password_change':'🔑','blacklist_add':'🚫','blacklist_remove':'✅','user_add':'👤','user_remove':'❌'};
+  document.getElementById('audit-list').innerHTML=!data.length?'<p class="text-white/60">Keine Einträge</p>'
+    :data.map(e=>'<div class="flex items-center gap-3 py-2 border-b border-white/10">'
+      +'<span style="font-size:1.2rem">'+(icons[e.action]||'🔧')+'</span>'
+      +'<div class="flex-1"><span class="font-bold text-white">'+e.username+'</span> <span class="text-white/60 text-sm">'+e.action+'</span>'
+      +(e.details?'<p class="text-xs text-white/50 mt-0.5">'+e.details+'</p>':'')+'</div>'
+      +'<span class="text-xs text-white/50 shrink-0">'+new Date(e.ts).toLocaleString('de-DE')+'</span>'
+      +'</div>').join('');
+},
+
+analytics: window.loadAnalyticsDashboard,
+
+myAccount: ()=>{
+  const isMaster=myUsername==='admin';
+  const roleDisplay=myRole ? myRole.charAt(0).toUpperCase()+myRole.slice(1) : myRole;
+  document.getElementById('content').innerHTML=h2t('🔑 Mein Account')
+    +card('<div style="max-width:360px">'
+    +'<div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:12px;margin-bottom:16px">'
+    +'<p class="text-white/60 text-xs">Eingeloggt als</p>'
+    +'<p class="font-bold text-white text-lg mt-1">'+myUsername+'</p>'
+    +'<p class="text-xs mt-1" style="color:'+(myRole==='owner'?'#ffd700':myRole==='admin'?'#ed4245':myRole==='moderator'?'#f0b132':'#3ba55c')+'">'+roleDisplay+'</p>'
+    +'</div>'
+    +(isMaster?'<p class="text-white/60 text-sm">Master-Admin Passwort nur über config/.env änderbar.</p>'
+    :'<h4 class="font-semibold text-white mb-3">Passwort ändern</h4>'
+    +'<input id="pw-cur" type="password" placeholder="Aktuelles Passwort" class="inp mb-2"/>'
+    +'<input id="pw-new" type="password" placeholder="Neues Passwort (min. 4)" class="inp mb-2"/>'
+    +'<input id="pw-rep" type="password" placeholder="Wiederholen" class="inp mb-4"/>'
+    +'<button onclick="changePassword()" class="btn btn-blue w-full">💾 Passwort ändern</button>')
+    +'</div>');
+},
+
+faqManagement: window.loadFaqManagement,
+
+marketConfig: async function() {
+  document.getElementById('content').innerHTML =
+    h2t('🛒 Opsucht Market Config')
+    +card('<p class="text-white/60 text-sm mb-4">Konfiguriere den Discord-Channel, in dem das Market-Embed gesendet wird. Das Embed enthält einen "Markt öffnen" Button, der eine ephemeral Nachricht mit der Markt-Übersicht öffnet.</p>'
+    +'<div id="mc-status" class="mb-4"></div>'
+    +'<label class="block text-sm font-semibold text-white/70 mb-2">Channel-ID</label>'
+    +'<div class="flex gap-2 mb-4">'
+    +'<input id="mc-channel-id" class="inp" placeholder="z.B. 123456789012345678" style="flex:1"/>'
+    +'<button onclick="saveMarketChannel()" class="btn btn-blue">💾 Speichern</button>'
+    +'</div>'
+    +'<button onclick="sendMarketEmbed()" class="btn btn-green w-full mb-2">🚀 Markt-Embed senden / aktualisieren</button>')
+    +card('<h3 class="font-bold text-white mb-3">ℹ️ Info</h3>'
+    +'<p class="text-white/60 text-sm">Das Embed wird einmal gesendet und dann bei jedem Klick auf "Senden/Aktualisieren" aktualisiert (gleiche Nachricht). '
+    +'Spieler klicken auf "Markt öffnen" und bekommen eine nur für sie sichtbare Nachricht mit Kategorie-Auswahl, Pagination und Item-Details.</p>');
+  await loadMarketConfig();
+},
+
+shardConfig: async function() {
+  document.getElementById('content').innerHTML =
+    h2t('🪙 Shards Merchant Config')
+    +card('<p class="text-white/60 text-sm mb-4">Konfiguriere den Discord-Channel für das Shards-Live-Embed. Das Embed zeigt alle OPShards- und RedCoins-Kurse inkl. Base- und Exchange-Werte. Es wird täglich um 06:00 Uhr MESZ automatisch aktualisiert.</p>'
+    +'<div id="sc-status" class="mb-4"></div>'
+    +'<label class="block text-sm font-semibold text-white/70 mb-2">Channel-ID</label>'
+    +'<div class="flex gap-2 mb-4">'
+    +'<input id="sc-channel-id" class="inp" placeholder="z.B. 123456789012345678" style="flex:1"/>'
+    +'<button onclick="saveShardChannel()" class="btn btn-blue">💾 Speichern</button>'
+    +'</div>'
+    +'<button onclick="sendShardEmbed()" class="btn btn-green w-full mb-2">🚀 Shards-Live-Embed senden / aktualisieren</button>')
+    +card('<h3 class="font-bold text-white mb-3">ℹ️ Info</h3>'
+    +'<p class="text-white/60 text-sm">Beim Senden werden die Kurse live von der API abgefragt. Die Nachricht wird einmal erstellt und danach immer wieder über message.edit() aktualisiert. Keine neue Nachricht wird gesendet, solange die alte existiert.</p>');
+  await loadShardConfig();
+},
+
+logSystem: async function() {
+  document.getElementById('content').innerHTML =
+    h2t('📋 Log-System')
+    +card('<p class="text-white/60 text-sm mb-4">Konfiguriere den Discord-Channel für das Log-System. Dieses System protokolliert unabhängig vom normalen Bot-Log wichtige Discord-Events wie Nachrichten-Löschung, Join/Leave, Rollen, Channel, Timeouts und Voice-Aktivität als saubere Embeds.</p>'
+    +'<div id="ls-status" class="mb-4"></div>'
+    +'<label class="block text-sm font-semibold text-white/70 mb-2">Log-Channel-ID</label>'
+    +'<div class="flex gap-2 mb-4">'
+    +'<input id="ls-channel-id" class="inp" placeholder="z.B. 123456789012345678" style="flex:1"/>'
+    +'<button onclick="saveLogSystemChannel()" class="btn btn-blue">💾 Speichern</button>'
+    +'</div>')
+    +card('<h3 class="font-bold text-white mb-3">ℹ️ Geloggte Events</h3>'
+    +'<p class="text-white/60 text-sm">Nachrichten gelöscht/bearbeitet/bulk, User joined/left/banned/unbanned, Rollen vergeben/entfernt, Channel erstellt/gelöscht/bearbeitet, Kicks, Timeouts, Voice betreten/verlassen/verschoben. Bot-Nachrichten, Commands und Economy-Aktionen werden ignoriert.</p>');
+  await loadLogSystemConfig();
+},
+
+// ============ TICKET SYSTEM ============
+ticketPanel: async () => {
+  document.getElementById('content').innerHTML = h2t('🎫 Ticket Panel')
+    +card('<h3 class="font-bold text-white mb-3">📋 Panel Konfiguration</h3>'
+    +'<p class="text-white/60 text-sm mb-4">Konfiguriere den Channel, in dem das Ticket-Panel mit den Kategorie-Buttons gesendet wird.</p>'
+    +'<div id="tp-status" class="mb-4"></div>'
+    +'<label class="block text-sm font-semibold text-white/70 mb-2">Panel Channel-ID</label>'
+    +'<div class="flex gap-2 mb-4">'
+    +'<input id="tp-channel-id" class="inp" placeholder="z.B. 123456789012345678" style="flex:1;font-family:monospace"/>'
+    +'<button onclick="sendTicketPanel()" class="btn btn-blue">📤 Panel senden</button>'
+    +'<button onclick="updateTicketPanel()" class="btn btn-gray">🔄 Aktualisieren</button>'
+    +'</div>'
+    +'<p class="text-white/40 text-xs">Beim Senden wird ein Embed mit Buttons für alle konfigurierten Kategorien erstellt. Beim Aktualisieren wird das bestehende Panel aktualisiert.</p>')
+    +card('<h3 class="font-bold text-white mb-3">📂 Schnellzugriff</h3>'
+    +'<div class="flex gap-2">'
+    +'<button onclick="showSection(\'ticketCategories\')" class="btn btn-gray text-sm">📂 Kategorien verwalten</button>'
+    +'<button onclick="showSection(\'ticketList\')" class="btn btn-gray text-sm">📋 Tickets ansehen</button>'
+    +'</div>');
+  await loadTicketPanelConfig();
+},
+
+ticketCategories: async () => {
+  document.getElementById('content').innerHTML = h2t('📂 Ticket Kategorien')
+    +'<div class="flex gap-2 mb-5"><button onclick="showTicketCategoryModal()" class="btn btn-green text-sm">➕ Neue Kategorie</button><button onclick="loadTicketCategories()" class="btn btn-gray text-sm">🔄 Aktualisieren</button></div>'
+    +'<div id="tc-list">'+skeleton(4)+'</div>';
+  await loadTicketCategories();
+},
+
+ticketList: async () => {
+  document.getElementById('content').innerHTML = h2t('📋 Ticket Übersicht')
+    +'<div class="flex gap-2 mb-5 flex-wrap">'
+    +'<select id="tl-filter-status" onchange="loadTicketList()" class="inp" style="width:auto"><option value="">Alle Status</option><option value="open">Offen</option><option value="claimed">Beansprucht</option><option value="closed">Geschlossen</option></select>'
+    +'<select id="tl-filter-category" onchange="loadTicketList()" class="inp" style="width:auto"><option value="">Alle Kategorien</option></select>'
+    +'<button onclick="loadTicketList()" class="btn btn-gray text-sm">🔄 Aktualisieren</button>'
+    +'</div>'
+    +'<div id="tl-list">'+skeleton(4)+'</div>';
+  await loadTicketList();
+},
+
+ticketStats: async () => {
+  document.getElementById('content').innerHTML = h2t('📊 Ticket Statistiken')
+    +'<div id="ts-content">'+skeleton(4)+'</div>';
+  await loadTicketStats();
+},
+};
+
+function exportCoinsCSV(){
+  csvExport('coins-rangliste',['Name','Coins'],(window._coinsData||[]).map(u=>[userNames[u.userId]||u.userId,u.balance||0]));
+}
+function exportXpCSV(){
+  csvExport('xp-rangliste',['Name','Level','XP','Prestige'],(window._xpData||[]).map(u=>[userNames[u.userId]||u.userId,u.level,u.xp||0,u.prestige||0]));
+}
+
+async function resetAnalytics(){
+  const ok=await dhbtConfirm('Analytics zurücksetzen?','Alle Statistikdaten werden unwiderruflich gelöscht.','🗑️');
+  if(!ok) return;
+  const r=await fetch('/api/analytics/reset',{method:'POST'});
+  r.ok?toast('✅ Analytics zurückgesetzt!'):toast('❌ Fehler',false);
+  if(r.ok) sections.analytics();
+}
+
+sections.auctionConfig = async()=>{
+  document.getElementById('content').innerHTML=h2t('🔨 Auktionshaus')
+    +'<div class="flex gap-2 mb-4"><button onclick="sections.auctionConfig()" class="btn btn-gray text-xs">🔄 Neu laden</button></div>'
+    +card('<div id="auction-stats">Laden…</div>')
+    +card('<h3 class="font-semibold mb-3">🔌 Auktionshaus-API testen</h3><div class="flex gap-2 mb-3"><button onclick="testAuctionApi()" class="btn btn-blue text-sm">🔌 API testen</button></div><pre id="auction-api-result" class="text-sm text-white/70" style="white-space:pre-wrap">Noch nicht geprüft</pre>')
+    +card('<h3 class="font-semibold mb-3">🧪 Benachrichtigungen testen</h3><p class="text-white/60 text-sm mb-3">Test-DM an Discord User-ID senden. Alle Testnachrichten sind eindeutig als TEST markiert.</p><div class="flex flex-col gap-2"><label class="text-sm text-white/70">Discord User ID</label><input id="auction-test-discord-id" class="inp mb-2" placeholder="z. B. 123456789012345678"><div class="flex flex-wrap gap-2"><button onclick="testAuctionNotify(\'bid_on_own\')" class="btn btn-yellow text-sm">🔨 Gebot</button><button onclick="testAuctionNotify(\'own_auction_ended\')" class="btn btn-yellow text-sm">🏁 Beendet</button><button onclick="testAuctionNotify(\'outbid\')" class="btn btn-yellow text-sm">📈 Überboten</button><button onclick="testAuctionNotify(\'won\')" class="btn btn-yellow text-sm">🏆 Gewonnen</button><button onclick="testAllAuctionNotify()" class="btn btn-green text-sm">🧪 Alle testen</button></div><pre id="auction-test-result" class="text-sm text-white/70 mt-3" style="white-space:pre-wrap">Noch nicht getestet</pre></div>')
+    +card('<h3 class="font-semibold mb-3">🖥️ Live-Embed</h3><p class="text-white/60 text-sm mb-3">Poste das Auktionshaus-Haupt-Embed in einen Channel. Es wird wie beim Markt-System mit Kategorie-Auswahl, Seiten und Details dargestellt.</p><div class="flex flex-col gap-2"><label class="text-sm text-white/70">Discord Channel ID</label><input id="auction-live-channel" class="inp mb-2" placeholder="z. B. 123456789012345678"><div class="flex gap-2"><button onclick="saveAuctionLiveChannel()" class="btn btn-blue text-sm">💾 Channel speichern</button><button onclick="sendAuctionLive()" class="btn btn-green text-sm">🚀 Embed senden / aktualisieren</button></div><div id="auction-live-status" class="mt-3 text-sm"></div></div>');
+
+  const stats = await fetch('/api/auction/stats').then(r=>r.json()).catch(()=>null);
+  if(!stats){
+    document.getElementById('auction-stats').innerHTML='<span class="text-red-400">Fehler beim Laden</span>';
+    return;
+  }
+  loadAuctionLiveConfig();
+  const rows=[
+    ['API-Abfragen', stats.stats.polls || 0],
+    ['API-Fehler', stats.stats.errors || 0],
+    ['Aktive Auktionen (Snapshot)', stats.activeAuctions || 0],
+    ['Benutzer mit Einstellungen', stats.totalUsers || 0],
+    ['Benachrichtigungen aktiviert', stats.enabledUsers || 0],
+    ['Gesendete DMs', stats.stats.sent || 0],
+    ['Fehlgeschlagene DMs', stats.stats.failed || 0],
+    ['Letzter Fehler', stats.lastError ? stats.lastError.slice(0,120) : '—'],
+    ['Letzte API-Abfrage', stats.stats.lastSuccessAt ? new Date(stats.stats.lastSuccessAt).toLocaleString('de-DE') : '—']
+  ];
+  document.getElementById('auction-stats').innerHTML='<table class="w-full text-sm">'+rows.map(r=>'<tr><td class="text-white/50 py-1" style="width:45%">'+r[0]+'</td><td class="text-white py-1">'+r[1]+'</td></tr>').join('')+'</table>';
+};
+
+// ---- ACTIONS ----
+
+// ============ TICKET SYSTEM FUNCTIONS ============
+async function tApi(path, opts={}) {
+  const r = await fetch(path, { credentials: 'same-origin', ...opts });
+  if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.error||'Fehler '+r.status); }
+  return r.json();
+}
+
+async function loadTicketPanelConfig() {
+  try {
+    const cfg = await tApi('/api/tickets/panel/config');
+    const inp = document.getElementById('tp-channel-id');
+    if (inp) inp.value = cfg.channelId || '';
+    const status = document.getElementById('tp-status');
+    if (status) {
+      if (cfg.messageId) {
+        status.innerHTML = '<div class="bg-[#3ba55c]/20 border border-[#3ba55c]/30 rounded-lg p-3 text-sm text-[#7dc47d]">✅ Panel aktiv in Channel <span class="font-mono">'+escapeHtml(cfg.channelId)+'</span> (Nachricht: <span class="font-mono">'+escapeHtml(cfg.messageId)+')</span></div>';
+      } else {
+        status.innerHTML = '<div class="bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white/50">⚠️ Noch kein Panel gesendet.</div>';
+      }
+    }
+  } catch(e) { toast(e.message, false); }
+}
+
+async function sendTicketPanel() {
+  try {
+    const channelId = document.getElementById('tp-channel-id').value.trim();
+    if (!channelId) return toast('Channel-ID erforderlich', false);
+    const result = await tApi('/api/tickets/panel/send', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ channelId, guildId: window.currentGuildId }) });
+    toast('✅ Panel gesendet! Nachricht-ID: '+result.messageId);
+    await loadTicketPanelConfig();
+  } catch(e) { toast(e.message, false); }
+}
+
+async function updateTicketPanel() {
+  try {
+    await tApi('/api/tickets/panel/update', { method:'POST' });
+    toast('✅ Panel aktualisiert!');
+  } catch(e) { toast(e.message, false); }
+}
+
+async function loadTicketCategories() {
+  try {
+    const data = await tApi('/api/tickets/categories');
+    const list = document.getElementById('tc-list');
+    if (!data.categories || !data.categories.length) {
+      list.innerHTML = card('<p class="text-white/50 text-sm text-center py-4">Noch keine Kategorien erstellt. Klicke auf "Neue Kategorie" um zu beginnen.</p>');
+      return;
+    }
+    list.innerHTML = data.categories.map(c => {
+      const col = c.color || 3447003;
+      const r = (col >> 16) & 255, g = (col >> 8) & 255, b = col & 255;
+      const hex = col.toString(16).padStart(6, '0');
+      return card(
+        '<div class="flex items-start justify-between gap-3">'
+        +'<div class="flex-1">'
+        +'<div class="flex items-center gap-2 mb-1"><span style="font-size:1.3rem">'+escapeHtml(c.emoji||'🎫')+'</span><span class="font-bold text-white">'+escapeHtml(c.name)+'</span>'
+        +'<span class="text-xs px-2 py-.5 rounded" style="background:rgba('+r+','+g+','+b+',.2);color:#'+hex+'">Farbe</span>'
+        +'</div>'
+        +'<p class="text-white/60 text-sm mb-2">'+escapeHtml(c.description||'Keine Beschreibung')+'</p>'
+        +'<div class="text-xs text-white/40 flex gap-3 flex-wrap">'
+        +'<span>👥 Staff-Rollen: '+((c.staffRoles||[]).length||'keine')+'</span>'
+        +'<span>📝 Formular-Felder: '+((c.formFields||[]).length||'keine')+'</span>'
+        +'<span>📺 Channels: '+((c.channelIds||[]).length||'alle')+'</span>'
+        +'</div>'
+        +'</div>'
+        +'<div class="flex gap-1 flex-shrink-0">'
+        +'<button onclick="showTicketCategoryModal(\''+c.id+'\')" class="btn btn-gray text-xs" style="padding:.3rem .6rem">✏️</button>'
+        +'<button onclick="deleteTicketCategory(\''+c.id+'\')" class="btn btn-red text-xs" style="padding:.3rem .6rem">🗑</button>'
+        +'</div>'
+        +'</div>'
+      );
+    }).join('');
+  } catch(e) { toast(e.message, false); }
+}
+
+async function showTicketCategoryModal(id) {
+  let cat = { name:'', emoji:'🎫', description:'', instructions:'', color:3447003, staffRoles:[], channelIds:[], formFields:[] };
+  if (id) {
+    try {
+      const data = await tApi('/api/tickets/categories');
+      cat = data.categories.find(c => c.id === id) || cat;
+    } catch(e) { toast(e.message, false); return; }
+  }
+  const box = document.getElementById('ticket-modal-box');
+  if (!box) return toast('Modal nicht gefunden', false);
+  box.innerHTML = `
+    <h3 class="font-bold text-white text-lg mb-4">${id?'Kategorie bearbeiten':'Neue Kategorie'}</h3>
+    <div class="grid gap-3">
+      <div><label class="label">Name</label><input id="tc-name" class="inp" value="${escapeAttr(cat.name)}" placeholder="z.B. Allgemeiner Support"></div>
+      <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
+        <div><label class="label">Emoji/Icon</label><input id="tc-emoji" class="inp" value="${escapeAttr(cat.emoji||'🎫')}" placeholder="🎫"></div>
+        <div><label class="label">Farbe (Hex)</label><input id="tc-color" class="inp" value="#${(cat.color||3447003).toString(16).padStart(6,'0')}" placeholder="#4DA3FF" style="font-family:monospace"></div>
+      </div>
+      <div><label class="label">Beschreibung (im Panel sichtbar)</label><input id="tc-description" class="inp" value="${escapeAttr(cat.description||'')}" placeholder="Kurze Beschreibung der Kategorie"></div>
+      <div><label class="label">Anweisungen (im Ticket-Thread sichtbar)</label><textarea id="tc-instructions" class="inp" rows="3" placeholder="Was soll der User tun?">${escapeHtml(cat.instructions||'')}</textarea></div>
+      <div><label class="label">Staff-Rollen (kommagetrennte IDs)</label><input id="tc-staff-roles" class="inp" value="${escapeAttr((cat.staffRoles||[]).join(', '))}" placeholder="123456, 789012" style="font-family:monospace"></div>
+      <div>
+        <label class="label">Formular-Felder</label>
+        <div id="tc-form-fields" class="grid gap-2 mb-2"></div>
+        <button onclick="addFormFieldRow()" class="btn btn-gray text-xs">➕ Feld hinzufügen</button>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4 justify-end">
+      <button onclick="closeTicketModal()" class="btn btn-gray">Abbrechen</button>
+      <button onclick="saveTicketCategory('${id||''}')" class="btn btn-green">💾 Speichern</button>
+    </div>
+  `;
+  window._ticketFormFields = JSON.parse(JSON.stringify(cat.formFields || []));
+  renderFormFieldsRows();
+  const overlay = document.getElementById('ticket-modal-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeTicketModal() {
+  const overlay = document.getElementById('ticket-modal-overlay');
+  if (overlay) { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 180); }
+}
+
+function closeModal() {
+  closeTicketModal();
+}
+
+function addFormFieldRow() {
+  window._ticketFormFields = window._ticketFormFields || [];
+  window._ticketFormFields.push({ id: 'f_'+Date.now()+'_'+Math.random().toString(36).slice(2,5), label:'', style:'short', required:true, placeholder:'', maxLength:4000 });
+  renderFormFieldsRows();
+}
+
+function removeFormFieldRow(idx) {
+  window._ticketFormFields.splice(idx, 1);
+  renderFormFieldsRows();
+}
+
+function renderFormFieldsRows() {
+  const box = document.getElementById('tc-form-fields');
+  if (!box) return;
+  const fields = window._ticketFormFields || [];
+  box.innerHTML = fields.map((f, i) => `
+    <div class="flex gap-2 items-start" style="background:rgba(255,255,255,.04);border-radius:8px;padding:.5rem">
+      <input class="inp" style="flex:2" placeholder="Label" value="${escapeAttr(f.label)}" oninput="window._ticketFormFields[${i}].label=this.value">
+      <select class="inp" style="flex:1;width:auto" onchange="window._ticketFormFields[${i}].style=this.value">
+        <option value="short" ${f.style==='short'?'selected':''}>Kurz</option>
+        <option value="long" ${f.style==='long'?'selected':''}>Lang</option>
+      </select>
+      <label class="flex items-center text-xs gap-1" style="width:80px"><input type="checkbox" ${f.required?'checked':''} onchange="window._ticketFormFields[${i}].required=this.checked" style="accent-color:#4DA3FF"> Pflicht</label>
+      <button onclick="removeFormFieldRow(${i})" class="btn btn-red text-xs" style="padding:.2rem .5rem">🗑</button>
+    </div>
+  `).join('');
+}
+
+async function saveTicketCategory(id) {
+  try {
+    const name = document.getElementById('tc-name').value.trim();
+    if (!name) return toast('Name erforderlich', false);
+    const colorHex = document.getElementById('tc-color').value.trim().replace('#','');
+    const color = parseInt(colorHex, 16) || 3447003;
+    const staffRoles = document.getElementById('tc-staff-roles').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const body = {
+      name,
+      emoji: document.getElementById('tc-emoji').value.trim() || '🎫',
+      description: document.getElementById('tc-description').value.trim(),
+      instructions: document.getElementById('tc-instructions').value.trim(),
+      color,
+      staffRoles,
+      channelIds: [],
+      formFields: (window._ticketFormFields || []).filter(f => f.label)
+    };
+    if (id) {
+      await tApi('/api/tickets/categories/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      toast('✅ Kategorie aktualisiert');
+    } else {
+      await tApi('/api/tickets/categories', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      toast('✅ Kategorie erstellt');
+    }
+    closeModal();
+    await loadTicketCategories();
+  } catch(e) { toast(e.message, false); }
+}
+
+async function deleteTicketCategory(id) {
+  if (!await dhbtConfirm('Kategorie löschen', 'Möchtest du diese Kategorie wirklich löschen? Bestehende Tickets bleiben erhalten.')) return;
+  try {
+    await tApi('/api/tickets/categories/'+id, { method:'DELETE' });
+    toast('✅ Kategorie gelöscht');
+    await loadTicketCategories();
+  } catch(e) { toast(e.message, false); }
+}
+
+async function loadTicketList() {
+  try {
+    const status = document.getElementById('tl-filter-status').value;
+    const catSel = document.getElementById('tl-filter-category');
+    // Load categories for filter
+    if (!catSel.options.length || catSel.options.length === 1) {
+      const catData = await tApi('/api/tickets/categories');
+      catData.categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.name;
+        catSel.appendChild(opt);
+      });
+    }
+    const categoryId = catSel.value;
+    let url = '/api/tickets?limit=200';
+    if (status) url += '&status='+status;
+    if (categoryId) url += '&categoryId='+categoryId;
+    const data = await tApi(url);
+    const list = document.getElementById('tl-list');
+    if (!data.tickets || !data.tickets.length) {
+      list.innerHTML = card('<p class="text-white/50 text-sm text-center py-4">Keine Tickets gefunden.</p>');
+      return;
+    }
+    const statusColors = { open:'#3ba55c', claimed:'#f0b132', closed:'#ed4245' };
+    const statusLabels = { open:'Offen', claimed:'Beansprucht', closed:'Geschlossen' };
+    const catData = await tApi('/api/tickets/categories');
+    const catMap = {}; catData.categories.forEach(c => catMap[c.id] = c);
+    list.innerHTML = card(tbl(
+      ['ID','Kategorie','User','Status','Claimed by','Erstellt','Aktion'],
+      data.tickets.map(t => {
+        const cat = catMap[t.categoryId];
+        const date = new Date(t.createdAt).toLocaleString('de-DE', { timeZone:'Europe/Berlin' });
+        return '<tr>'
+          +'<td class="font-mono text-xs">'+escapeHtml(t.id.slice(0,15))+'...</td>'
+          +'<td>'+(cat?escapeHtml((cat.emoji||'🎫')+' '+cat.name):escapeHtml(t.categoryId))+'</td>'
+          +'<td>'+uname(t.userId)+'</td>'
+          +'<td><span class="text-xs px-2 py-.5 rounded" style="background:'+statusColors[t.status]+'20;color:'+statusColors[t.status]+'">'+statusLabels[t.status]+'</span></td>'
+          +'<td>'+(t.claimedByName?escapeHtml(t.claimedByName):'—')+'</td>'
+          +'<td class="text-xs text-white/50">'+date+'</td>'
+          +'<td><button onclick="viewTicketDetail(\''+t.id+'\')" class="btn btn-gray text-xs" style="padding:.2rem .5rem">👁️</button>'
+          +(t.status!=='closed'?' <button onclick="closeTicketDashboard(\''+t.id+'\')" class="btn btn-red text-xs" style="padding:.2rem .5rem">🔒</button>':'')
+          +'</td>'
+          +'</tr>';
+      }).join('')
+    ));
+  } catch(e) { toast(e.message, false); }
+}
+
+async function viewTicketDetail(id) {
+  try {
+    const data = await tApi('/api/tickets/'+id);
+    const t = data.ticket;
+    const catData = await tApi('/api/tickets/categories');
+    const cat = catData.categories.find(c => c.id === t.categoryId);
+    const statusLabels = { open:'Offen', claimed:'Beansprucht', closed:'Geschlossen' };
+    let html = h2t('🎫 Ticket Details')
+      +card('<div class="grid gap-3" style="grid-template-columns:1fr 1fr">'
+      +'<div><span class="text-white/50 text-xs">Ticket-ID</span><div class="font-mono text-sm">'+escapeHtml(t.id)+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">Status</span><div>'+statusLabels[t.status]+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">Kategorie</span><div>'+(cat?escapeHtml((cat.emoji||'🎫')+' '+cat.name):'—')+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">User</span><div>'+uname(t.userId)+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">Thread</span><div class="font-mono text-xs">'+escapeHtml(t.threadId||'—')+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">Thread-Name</span><div>'+escapeHtml(t.threadName||'—')+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">Claimed by</span><div>'+(t.claimedByName?escapeHtml(t.claimedByName):'—')+'</div></div>'
+      +'<div><span class="text-white/50 text-xs">Erstellt</span><div>'+new Date(t.createdAt).toLocaleString('de-DE')+'</div></div>'
+      +'</div>'
+      +(t.formData && Object.keys(t.formData).length ? '<h4 class="font-bold text-white mt-4 mb-2">📝 Formular-Daten</h4>'+Object.entries(t.formData).map(([k,v])=>'<div class="mb-1"><span class="text-white/50 text-xs">'+escapeHtml(k)+':</span> <span class="text-white text-sm">'+escapeHtml(String(v))+'</span></div>').join('') : '')
+      );
+    if (data.logs && data.logs.length) {
+      html += card('<h3 class="font-bold text-white mb-3">📜 Verlauf</h3>'+data.logs.map(l => '<div class="text-sm mb-1"><span class="text-white/40 text-xs">'+new Date(l.createdAt).toLocaleString('de-DE')+'</span> <span class="text-white">['+escapeHtml(l.action)+']</span> <span class="text-white/60">'+escapeHtml(l.actorName||'')+'</span>'+(l.details?' <span class="text-white/40">'+escapeHtml(l.details)+'</span>':'')+'</div>').join(''));
+    }
+    if (data.messages && data.messages.length) {
+      html += card('<h3 class="font-bold text-white mb-3">💬 Nachrichten ('+data.messages.length+')</h3><div style="max-height:300px;overflow-y:auto">'+data.messages.slice(-50).map(m => '<div class="text-sm mb-2"><span class="text-white/40 text-xs">'+new Date(m.createdAt).toLocaleString('de-DE')+'</span> <span class="text-white/70 font-semibold">'+escapeHtml(m.username||m.userId)+':</span> <span class="text-white/60">'+escapeHtml(m.content.slice(0,200))+'</span></div>').join('')+'</div>');
+    }
+    html += '<div class="flex gap-2 mt-4"><button onclick="showSection(\'ticketList\')" class="btn btn-gray text-sm">← Zurück</button></div>';
+    document.getElementById('content').innerHTML = html;
+  } catch(e) { toast(e.message, false); }
+}
+
+async function closeTicketDashboard(id) {
+  if (!await dhbtConfirm('Ticket schließen', 'Möchtest du dieses Ticket wirklich schließen?')) return;
+  try {
+    await tApi('/api/tickets/'+id+'/close', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ reason:'Geschlossen über Dashboard' }) });
+    toast('✅ Ticket geschlossen');
+    await loadTicketList();
+  } catch(e) { toast(e.message, false); }
+}
+
+async function loadTicketStats() {
+  try {
+    const data = await tApi('/api/tickets/stats');
+    const s = data;
+    const catList = (s.categoryStats||[]).map(c => '<tr><td class="py-1">'+escapeHtml((c.emoji||'🎫')+' '+c.name)+'</td><td class="py-1 text-center">'+c.count+'</td></tr>').join('');
+    document.getElementById('ts-content').innerHTML =
+      '<div class="grid gap-3 mb-6" style="grid-template-columns:repeat(4,1fr)">'
+      +'<div class="stat-card"><div class="stat-card-val" style="color:#4DA3FF">'+s.total+'</div><div class="stat-card-lbl">Gesamt</div></div>'
+      +'<div class="stat-card"><div class="stat-card-val" style="color:#3ba55c">'+s.open+'</div><div class="stat-card-lbl">Offen</div></div>'
+      +'<div class="stat-card"><div class="stat-card-val" style="color:#f0b132">'+s.claimed+'</div><div class="stat-card-lbl">Beansprucht</div></div>'
+      +'<div class="stat-card"><div class="stat-card-val" style="color:#ed4245">'+s.closed+'</div><div class="stat-card-lbl">Geschlossen</div></div>'
+      +'</div>'
+      +card('<h3 class="font-bold text-white mb-3">📂 Tickets pro Kategorie</h3>'
+      +(catList ? '<table class="w-full text-sm">'+catList+'</table>' : '<p class="text-white/50 text-sm">Keine Kategorien.</p>'));
+  } catch(e) { toast(e.message, false); }
+}
+
+async function loadMarketConfig(){
+  try{
+    const cfg=await fetch('/api/market/config').then(r=>r.json());
+    const inp=document.getElementById('mc-channel-id');
+    if(inp) inp.value=cfg.channelId||'';
+    const status=document.getElementById('mc-status');
+    if(status){
+      if(cfg.channelId){
+        status.innerHTML='<div class="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 text-sm text-green-400">✅ Channel konfiguriert: <span class="font-mono">'+cfg.channelId+'</span>'+(cfg.messageId?'<br>📌 Embed-Nachricht existiert (wird aktualisiert beim Senden)':'<br>⚠️ Noch kein Embed gesendet')+'</div>';
+      } else {
+        status.innerHTML='<div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-sm text-yellow-400">⚠️ Kein Channel konfiguriert</div>';
+      }
+    }
+  }catch(e){ toast('❌ Config konnte nicht geladen werden',false); }
+}
+async function saveMarketChannel(){
+  const inp=document.getElementById('mc-channel-id');
+  const channelId=inp.value.trim();
+  const r=await fetch('/api/market/config/channel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channelId})});
+  r.ok?toast('✅ Channel gespeichert!'):toast('❌ Fehler',false);
+  await loadMarketConfig();
+}
+async function sendMarketEmbed(){
+  const r=await fetch('/api/market/send',{method:'POST'});
+  if(r.ok){
+    const data=await r.json();
+    toast(data.updated?'✅ Market-Embed aktualisiert!':'✅ Market-Embed gesendet!');
+    await loadMarketConfig();
+  } else {
+    const err=await r.json().catch(()=>({error:'Unbekannt'}));
+    toast('❌ '+err.error,false);
+  }
+}
+async function loadShardConfig(){
+  try{
+    const cfg=await fetch('/api/shard/config').then(r=>r.json());
+    const inp=document.getElementById('sc-channel-id');
+    if(inp) inp.value=cfg.channelId||'';
+    const status=document.getElementById('sc-status');
+    if(status){
+      if(cfg.channelId){
+        status.innerHTML='<div class="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 text-sm text-green-400">✅ Channel konfiguriert: <span class="font-mono">'+cfg.channelId+'</span>'+(cfg.messageId?'<br>📌 Live-Embed existiert (wird aktualisiert beim Senden)':'<br>⚠️ Noch kein Live-Embed gesendet')+'</div>';
+      } else {
+        status.innerHTML='<div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-sm text-yellow-400">⚠️ Kein Channel konfiguriert</div>';
+      }
+    }
+  }catch(e){ toast('❌ Shards-Config konnte nicht geladen werden',false); }
+}
+async function saveShardChannel(){
+  const inp=document.getElementById('sc-channel-id');
+  const channelId=inp.value.trim();
+  const r=await fetch('/api/shard/config/channel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channelId})});
+  r.ok?toast('✅ Channel gespeichert!'):toast('❌ Fehler',false);
+  await loadShardConfig();
+}
+async function sendShardEmbed(){
+  const r=await fetch('/api/shard/send',{method:'POST'});
+  if(r.ok){
+    const data=await r.json();
+    toast(data.updated?'✅ Shards-Live-Embed aktualisiert!':'✅ Shards-Live-Embed gesendet!');
+    await loadShardConfig();
+  } else {
+    const err=await r.json().catch(()=>({error:'Unbekannt'}));
+    toast('❌ '+err.error,false);
+  }
+}
+async function loadLogSystemConfig(){
+  try{
+    const cfg=await fetch('/api/log-system/config').then(r=>r.json());
+    const inp=document.getElementById('ls-channel-id');
+    if(inp) inp.value=cfg.channelId||'';
+    const status=document.getElementById('ls-status');
+    if(status){
+      if(cfg.channelId){
+        status.innerHTML='<div class="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 text-sm text-green-400">✅ Log-Channel konfiguriert: <span class="font-mono">'+cfg.channelId+'</span></div>';
+      } else {
+        status.innerHTML='<div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-sm text-yellow-400">⚠️ Kein Log-Channel konfiguriert</div>';
+      }
+    }
+  }catch(e){ toast('❌ Log-System Config konnte nicht geladen werden',false); }
+}
+async function saveLogSystemChannel(){
+  const inp=document.getElementById('ls-channel-id');
+  const channelId=inp.value.trim();
+  const r=await fetch('/api/log-system/config/channel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channelId})});
+  r.ok?toast('✅ Log-Channel gespeichert!'):toast('❌ Fehler',false);
+  await loadLogSystemConfig();
+}
+async function loadZahlen(){
+  const g=document.getElementById('z-guild')?.value?.trim()||'';
+  const data=await fetch('/api/zahlen/leaderboard'+(g?'?guildId='+g:'')).then(r=>r.json()).catch(()=>[]);
+  document.querySelector('#content tbody').innerHTML=data.map((s,i)=>row([i+1,uname(s.userId),'<span class="text-green-400 font-bold">'+(s.correctNumbers||0)+'</span>','<span class="text-red-400">'+(s.mistakes||0)+'</span>','<span class="text-yellow-400">'+(s.coinsReceived||0)+'</span>'])).join('')||'<tr><td colspan="5" class="text-center text-white/60 py-4">Keine Daten</td></tr>';
+}
+
+async function saveEconomy(){
+  const fields=['messageReward','messageRewardInterval','voiceRewardPerMinute','payMaxAmountPerTransfer','payMaxAmountPerDay','payMaxReceivedPerWeek'];
+  const body={};
+  for(const f of fields){const el=document.getElementById('ec-'+f);if(el)body[f]=el.value;}
+  const r=await fetch('/api/settings/economy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  r.ok?toast('✅ Economy gespeichert!'):toast('❌ Fehler!',false);
+}
+
+async function saveXpConfig(){
+  const inputs=document.querySelectorAll('[id^="xpc-"]');
+  const body={};
+  inputs.forEach(el=>{const k=el.id.replace('xpc-','');body[k]=el.type==='checkbox'?el.checked:Number(el.value);});
+  const r=await fetch('/api/settings/xpconfig',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  r.ok?toast('✅ XP Config gespeichert!'):toast('❌ Fehler!',false);
+}
+
+async function saveKartenSettings(){
+  const body={
+    createThread: document.getElementById('ks-createThread')?.checked || false,
+    mainForumChannelId: document.getElementById('ks-mainForumChannelId')?.value || '',
+    testForumChannelId: document.getElementById('ks-testForumChannelId')?.value || '',
+    mainPingRoleId: document.getElementById('ks-mainPingRoleId')?.value || '',
+    testPingRoleId: document.getElementById('ks-testPingRoleId')?.value || '',
+    notificationChannelId: document.getElementById('ks-notificationChannelId')?.value || '',
+    maxMapSizeX: Number(document.getElementById('ks-maxMapSizeX')?.value)||0,
+    maxMapSizeY: Number(document.getElementById('ks-maxMapSizeY')?.value)||0
+  };
+  const r=await fetch('/api/settings/karten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  r.ok?toast('✅ Karten Config gespeichert!'):toast('❌ Fehler!',false);
+}
+
+async function saveOrderLimits(){
+  const body={
+    kartenLimit: Number(document.getElementById('ol-karten')?.value)||0,
+    builderLimit: Number(document.getElementById('ol-builder')?.value)||0
+  };
+  const r=await fetch('/api/settings/order-limits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  r.ok?toast('✅ Auftrags-Limits gespeichert!'):toast('❌ Fehler!',false);
+  if(r.ok) sections.orderLimits();
+}
+
+async function resetKartenOrder(id){
+  if(!confirm('Bestellung wirklich zurücksetzen?'))return;
+  const r=await fetch('/api/karten/orders/'+id+'/reset',{method:'POST'});
+  if(r.ok){toast('✅ Bestellung zurückgesetzt');sections.kartenOrders();}
+  else toast('❌ Fehler!',false);
+}
+
+async function deleteKartenOrder(id){
+  if(!confirm('Bestellung wirklich löschen?'))return;
+  const r=await fetch('/api/karten/orders/'+id+'/delete',{method:'POST'});
+  if(r.ok){toast('✅ Bestellung gelöscht');sections.kartenOrders();}
+  else toast('❌ Fehler!',false);
+}
+
+async function resetBuilderOrder(id){
+  if(!confirm('Builder-Bestellung wirklich zurücksetzen?'))return;
+  const r=await fetch('/api/builder/orders/'+id+'/reset',{method:'POST'});
+  if(r.ok){toast('✅ Builder-Bestellung zurückgesetzt');sections.builderOrders();}
+  else toast('❌ Fehler!',false);
+}
+
+async function deleteBuilderOrder(id){
+  if(!confirm('Builder-Bestellung wirklich löschen?'))return;
+  const r=await fetch('/api/builder/orders/'+id+'/delete',{method:'POST'});
+  if(r.ok){toast('✅ Builder-Bestellung gelöscht');sections.builderOrders();}
+  else toast('❌ Fehler!',false);
+}
+
+async function deleteBuilderJob(id){
+  if(!confirm('Builder-Auftrag wirklich löschen?'))return;
+  const r=await fetch('/api/builder/jobs/'+id+'/delete',{method:'POST'});
+  if(r.ok){toast('✅ Builder-Auftrag gelöscht');sections.builderJobs();}
+  else toast('❌ Fehler!',false);
+}
+
+async function acknowledgeAbsence(id,btn){
+  if(!confirm('Abwesenheit bestätigen und DM an User senden?'))return;
+  const r=await fetch('/api/absences/'+id+'/acknowledge',{method:'POST'});
+  if(r.ok){
+    toast('✅ Bestätigt und DM gesendet');
+    btn.disabled=true;
+    btn.textContent='✅ Bestätigt';
+  } else toast('❌ Fehler!',false);
+}
+
+async function addProbezeit(){
+  const userId=document.getElementById('pz-user')?.value?.trim();
+  const guildId=document.getElementById('pz-guild')?.value?.trim();
+  const dauer=document.getElementById('pz-dauer')?.value?.trim();
+  const zielrolleId=document.getElementById('pz-role')?.value?.trim();
+  if(!userId||!guildId||!dauer||!zielrolleId)return toast('❌ Alle Felder ausfüllen',false);
+  const r=await fetch('/api/probezeiten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,guildId,dauer,zielrolleId})});
+  if(r.ok){toast('✅ Probezeit gestartet');sections.probezeitManagement();}
+  else toast('❌ Fehler!',false);
+}
+
+async function extendProbezeit(id){
+  const additionalDauer=prompt('Verlängerung eingeben (z. B. 2d, 12h):');
+  if(!additionalDauer)return;
+  const r=await fetch('/api/probezeiten/'+id+'/extend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({additionalDauer})});
+  if(r.ok){toast('✅ Probezeit verlängert');sections.probezeitManagement();}
+  else toast('❌ Fehler!',false);
+}
+
+async function deleteProbezeit(id){
+  if(!confirm('Probezeit wirklich löschen?'))return;
+  const r=await fetch('/api/probezeiten/'+id,{method:'DELETE'});
+  if(r.ok){toast('✅ Probezeit gelöscht');sections.probezeitManagement();}
+  else toast('❌ Fehler!',false);
+}
+
+async function saveDailyRewards(){
+  const dailyMin=document.getElementById('dr-min')?.value;
+  const dailyMax=document.getElementById('dr-max')?.value;
+  const r=await fetch('/api/daily-rewards/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dailyMin,dailyMax})});
+  if(r.ok){toast('✅ Daily Rewards gespeichert');sections.dailyRewards();}
+  else toast('❌ Fehler!',false);
+}
+
+async function resetDailyRewards(){
+  if(!confirm('Wirklich ALLE Daily-Rewards Daten zurücksetzen?'))return;
+  const r=await fetch('/api/daily-rewards/reset',{method:'POST'});
+  if(r.ok){toast('✅ Daily Rewards zurückgesetzt');sections.dailyRewards();}
+  else toast('❌ Fehler!',false);
+}
+
+async function addPublicShopItem(){
+  const id=document.getElementById('ps-id')?.value?.trim();
+  const name=document.getElementById('ps-name')?.value?.trim();
+  const category=document.getElementById('ps-cat')?.value?.trim();
+  const price=document.getElementById('ps-price')?.value;
+  const type=document.getElementById('ps-type')?.value?.trim()||'generic';
+  const roleId=document.getElementById('ps-role')?.value?.trim();
+  const description=document.getElementById('ps-desc')?.value?.trim();
+  if(!id||!name||!category||price===undefined||price==='')return toast('❌ ID, Name, Kategorie und Preis erforderlich',false);
+  const config={type,description};
+  if(roleId)config.roleId=roleId;
+  const r=await fetch('/api/public-shop/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,name,category,price:Number(price),config})});
+  if(r.ok){toast('✅ Item hinzugefügt');sections.publicShop();}
+  else toast('❌ Fehler!',false);
+}
+
+async function editPublicShopItem(itemJson){
+  let item;
+  try{item=JSON.parse(itemJson);}catch(e){return toast('❌ Fehler beim Lesen des Items',false);}
+  const price=prompt('Neuer Preis für '+item.name+':',item.price);
+  if(price===null)return;
+  const active=confirm('Item aktiv?');
+  const r=await fetch('/api/public-shop/items/'+item.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({price:Number(price),active})});
+  if(r.ok){toast('✅ Item aktualisiert');sections.publicShop();}
+  else toast('❌ Fehler!',false);
+}
+
+async function deletePublicShopItem(id){
+  if(!confirm('Item wirklich löschen?'))return;
+  const r=await fetch('/api/public-shop/items/'+id,{method:'DELETE'});
+  if(r.ok){toast('✅ Item gelöscht');sections.publicShop();}
+  else toast('❌ Fehler!',false);
+}
+
+function toLocalDateTime(iso){
+  if(!iso)return'';
+  const d=new Date(iso);
+  if(!Number.isFinite(d.getTime()))return'';
+  return d.toLocaleString('sv-SE',{timeZone:'Europe/Berlin'}).replace(' ','T').slice(0,16);
+}
+
+async function saveXpBooster(){
+  const multiplier=document.getElementById('xpb-multiplier')?.value;
+  const start=document.getElementById('xpb-start')?.value;
+  const end=document.getElementById('xpb-end')?.value;
+  const reason=document.getElementById('xpb-reason')?.value;
+  const body={
+    multiplier:Number(multiplier),
+    startAt:start?new Date(start).toISOString():null,
+    endAt:end?new Date(end).toISOString():null,
+    reason:reason||''
+  };
+  const r=await fetch('/api/xp/multiplier',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){toast('✅ XP Booster gespeichert!');sections.xpBooster();}
+  else toast('❌ Fehler!',false);
+}
+
+async function clearXpBooster(){
+  if(!confirm('XP Booster wirklich zurücksetzen?'))return;
+  const r=await fetch('/api/xp/multiplier/clear',{method:'POST'});
+  if(r.ok){toast('✅ XP Booster zurückgesetzt');sections.xpBooster();}
+  else toast('❌ Fehler!',false);
+}
+
+async function saveBotStatus(){
+  const enabled=document.getElementById('bot-maintenance')?.checked || false;
+  const reason=document.getElementById('bot-reason')?.value || '';
+  const r=await fetch('/api/bot-status/maintenance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled, reason})});
+  if(r.ok){toast('✅ Bot-Wartung gespeichert!');sections.botStatus();}
+  else toast('❌ Fehler!',false);
+}
+
+async function loadUserEdit(){
+  const uid=document.getElementById('u-id')?.value?.trim();if(!uid)return;
+  const d=await fetch('/api/user/'+uid+'/coins').then(r=>r.json()).catch(()=>null);
+  if(!d){toast('❌ Nicht gefunden',false);return;}
+  document.getElementById('u-result').style.display='block';
+  document.getElementById('u-name').innerHTML=uname(d.userId);
+  document.getElementById('u-stats').textContent='Level '+d.level+' | '+(d.xp||0).toLocaleString()+' XP | Prestige '+d.prestige;
+  document.getElementById('u-coins').value=d.balance;
+  document.getElementById('u-xp').value=d.xp;
+  document.getElementById('u-prestige').value=d.prestige||0;
+}
+async function saveUserCoins(){
+  const uid=document.getElementById('u-id')?.value?.trim();
+  const amount=document.getElementById('u-coins')?.value;
+  if(!uid)return;
+  const r=await fetch('/api/user/'+uid+'/coins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount})});
+  r.ok?toast('✅ Coins gespeichert!'):toast('❌ Fehler!',false);
+}
+async function saveUserXp(){
+  const uid=document.getElementById('u-id')?.value?.trim();
+  const xp=document.getElementById('u-xp')?.value;
+  if(!uid)return;
+  const r=await fetch('/api/user/'+uid+'/xp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xp})});
+  r.ok?toast('✅ XP gespeichert!'):toast('❌ Fehler!',false);
+}
+async function saveUserPrestige(){
+  const uid=document.getElementById('u-id')?.value?.trim();
+  const prestige=document.getElementById('u-prestige')?.value;
+  if(!uid)return;
+  const r=await fetch('/api/user/'+uid+'/prestige',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prestige})});
+  r.ok?toast('✅ Prestige gespeichert!'):toast('❌ Fehler!',false);
+}
+function editPrestige(userId, current){
+  const newVal=prompt('Neues Prestige für '+userId+' (0-5):',current);
+  if(newVal===null)return;
+  const value=Number(newVal);
+  if(!Number.isFinite(value)||value<0||value>5){toast('❌ Ungültiger Wert (0-5)',false);return;}
+  fetch('/api/user/'+userId+'/prestige',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prestige:value})})
+    .then(r=>{if(r.ok){toast('✅ Prestige gespeichert!');sections.xpPrestige();}else toast('❌ Fehler!',false);});
+}
+
+async function testAuctionApi(){
+  const el=document.getElementById('auction-api-result');
+  if(el) el.textContent='Prüfe…';
+  const data=await fetch('/api/auction/test-api').then(r=>r.json()).catch(()=>({success:false,error:'Anfrage fehlgeschlagen'}));
+  if(el) el.textContent=data.success
+    ? `🟢 Verbindung erfolgreich\nHTTP: 200\nAntwortzeit: ${data.responseTime} ms\nAktive Auktionen: ${data.activeAuctions}\nKategorien: ${data.categories}`
+    : `🔴 Fehler: ${data.error || 'Unbekannt'}`;
+}
+async function testAuctionNotify(type){
+  const id=document.getElementById('auction-test-discord-id')?.value?.trim();
+  const el=document.getElementById('auction-test-result');
+  if(!id){ if(el) el.textContent='❌ Discord User ID fehlt'; return; }
+  if(el) el.textContent='Sende…';
+  const data=await fetch('/api/auction/test/'+type,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discordId:id})}).then(r=>r.json()).catch(e=>({success:false,error:e.message}));
+  if(el) el.textContent=data.success ? `✅ ${type} gesendet` : `❌ ${type}: ${data.error || 'Fehler'}`;
+}
+async function testAllAuctionNotify(){
+  const id=document.getElementById('auction-test-discord-id')?.value?.trim();
+  const el=document.getElementById('auction-test-result');
+  if(!id){ if(el) el.textContent='❌ Discord User ID fehlt'; return; }
+  if(el) el.textContent='Sende alle…';
+  const data=await fetch('/api/auction/test-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discordId:id})}).then(r=>r.json()).catch(e=>({success:false,error:e.message}));
+  if(el) el.textContent=data.success ? data.results.map(r=>(r.success?'✅':'❌')+' '+r.type+(r.error?': '+r.error:'')).join('\n') : `❌ ${data.error || 'Fehler'}`;
+}
+
+async function loadAuctionLiveConfig(){
+  const cfg=await fetch('/api/auction/live/config').then(r=>r.json()).catch(()=>({}));
+  const inp=document.getElementById('auction-live-channel');
+  if(inp) inp.value=cfg.channelId||'';
+  const status=document.getElementById('auction-live-status');
+  if(status){
+    if(cfg.channelId){
+      status.innerHTML='<div class="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 text-sm text-green-400">✅ Channel konfiguriert: <span class="font-mono">'+cfg.channelId+'</span>'+(cfg.messageId?'<br>📌 Embed-Nachricht existiert (wird aktualisiert beim Senden)':'<br>⚠️ Noch kein Embed gesendet')+'</div>';
+    } else {
+      status.innerHTML='<div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-sm text-yellow-400">⚠️ Kein Channel konfiguriert</div>';
+    }
+  }
+}
+async function saveAuctionLiveChannel(){
+  const id=document.getElementById('auction-live-channel')?.value?.trim();
+  if(!id) return toast('Channel-ID fehlt',false);
+  const r=await fetch('/api/auction/live/config/channel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channelId:id})});
+  if(r.ok){ toast('✅ Channel gespeichert'); loadAuctionLiveConfig(); }
+  else toast('❌ Fehler beim Speichern',false);
+}
+async function sendAuctionLive(){
+  const r=await fetch('/api/auction/live/send',{method:'POST'});
+  const data=await r.json().catch(()=>({}));
+  if(r.ok) toast(data.updated ? '✅ Embed aktualisiert' : '✅ Embed gesendet');
+  else toast('❌ '+(data.error||'Fehler beim Senden'),false);
+}
+
+async function loadBlacklist(){
+  const data=await fetch('/api/blacklist').then(r=>r.json()).catch(()=>[]);
+  document.getElementById('bl-list').innerHTML=!data.length
+    ?'<p class="text-white/60 text-sm">Keine Einträge</p>'
+    :data.map(id=>'<div class="flex justify-between items-center mb-2" style="background:rgba(255,255,255,0.08);border-radius:8px;padding:8px 12px"><span class="text-sm">'+uname(id)+'</span><button onclick="removeBlacklist(\''+id+'\')" class="btn btn-red text-xs">Entfernen</button></div>').join('');
+}
+async function addBlacklist(){
+  const id=document.getElementById('bl-in')?.value?.trim();if(!id)return;
+  await fetch('/api/blacklist/'+id,{method:'POST'});
+  document.getElementById('bl-in').value='';loadBlacklist();
+}
+async function removeBlacklist(id){await fetch('/api/blacklist/'+id,{method:'DELETE'});loadBlacklist();}
+
+async function lookupXp(){
+  const uid=document.getElementById('xp-lookup-id')?.value?.trim();
+  const out=document.getElementById('xp-lookup-result');
+  if(!uid){out.innerHTML='';return;}
+  const r=await fetch('/api/leaderboard/xp/'+uid);
+  if(!r.ok){
+    const d=await r.json().catch(()=>({}));
+    out.innerHTML='<p class="text-red-400 text-sm mb-2">'+(d.error||'Fehler')+'</p>';
+    return;
+  }
+  const d=await r.json();
+  out.innerHTML=card('<div class="flex flex-wrap justify-between items-center gap-2"><span>'+uname(d.userId)+'</span><span class="text-sm">Platz <b>'+d.rank+'</b> · Level <b class="text-blue-400">'+d.level+'</b> · XP <b>'+(d.xp||0).toLocaleString()+'</b> · Prestige <b>'+(d.prestige||0)+'</b></span></div>');
+}
+
+async function loadMembersBlacklist(){
+  const data=await fetch('/api/members/blacklist').then(r=>r.json()).catch(()=>[]);
+  document.getElementById('mbl-list').innerHTML=!data.length
+    ?'<p class="text-white/60 text-sm">Keine Einträge</p>'
+    :data.map(id=>'<div class="flex justify-between items-center mb-2" style="background:rgba(255,255,255,0.08);border-radius:8px;padding:8px 12px"><span class="text-sm">'+uname(id)+'</span><button onclick="removeMembersBlacklist(\''+id+'\')" class="btn btn-red text-xs">Entfernen</button></div>').join('');
+}
+async function addMembersBlacklist(){
+  const id=document.getElementById('mbl-in')?.value?.trim();if(!id)return;
+  await fetch('/api/members/blacklist/'+id,{method:'POST'});
+  document.getElementById('mbl-in').value='';loadMembersBlacklist();
+}
+async function removeMembersBlacklist(id){await fetch('/api/members/blacklist/'+id,{method:'DELETE'});loadMembersBlacklist();}
+
+async function loadUserAch(){
+  const uid=document.getElementById('ach-uid')?.value?.trim();if(!uid)return;
+  const d=await fetch('/api/achievements/user/'+uid).then(r=>r.json()).catch(()=>({}));
+  const unlocked=Object.entries(d).filter(([,v])=>v?.unlocked);
+  document.getElementById('ach-user').innerHTML=!unlocked.length
+    ?'<p class="text-white/60 text-sm">Keine Achievements</p>'
+    :'<div class="grid gap-2" style="grid-template-columns:1fr 1fr">'+unlocked.map(([id])=>'<div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;font-size:.875rem;display:flex;justify-content:space-between"><span class="text-white">'+id+'</span><span class="text-green-400">✅</span></div>').join('')+'</div>';
+}
+
+async function loadShopItems(){
+  const data=await fetch('/api/shop/items').then(r=>r.json()).catch(()=>[]);
+  document.getElementById('shop-content').innerHTML=card(tbl(['ID','Name','Preis','Kategorie','Aktionen'],
+    data.map(i=>row([i.id,i.name,'<span class="text-yellow-400">'+(i.price||0)+' 💰</span>',i.category||'—',
+      '<div class="flex gap-1"><button onclick="openShopItemForm('+JSON.stringify(i).replace(/"/g,'&quot;')+')" class="btn btn-gray text-xs">✏️</button><button onclick="deleteShopItem(\''+i.id+'\')" class="btn btn-red text-xs">🗑</button></div>'
+    ])).join('')
+  ));
+}
+async function loadShopOrders(){
+  const data=await fetch('/api/shop/orders').then(r=>r.json()).catch(()=>[]);
+  if(!data.length){
+    document.getElementById('shop-content').innerHTML=card('<p class="text-white/60">Keine Bestellungen</p>');
+    return;
+  }
+  document.getElementById('shop-content').innerHTML=card(tbl(['Käufer','Artikel','Zeit','Status'],
+    data.map((o,idx)=>row([uname(o.userId||'?'),o.itemId||'?',o.timestamp?new Date(o.timestamp).toLocaleString('de-DE'):'—',
+      o.completed?'<span class="text-green-400 font-bold">✅ Erledigt</span>':'<button onclick="completeOrder('+idx+')" class="btn btn-green text-xs">✅ Erledigen</button>'
+    ])).join('')
+  ));
+}
+
+async function toggleCommand(name,active){
+  await fetch('/api/commands/'+name,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({active,reason:''})});
+  toast(active?'✅ Command aktiviert':'⚠️ Command deaktiviert',active);
+  sections.commands();
+}
+
+async function resetMiniGameCooldown(userId){
+  if(!confirm('Cooldown für '+userId+' wirklich zurücksetzen?'))return;
+  const r=await fetch('/api/minigames/cooldown/reset/'+userId,{method:'POST'});
+  if(r.ok){toast('✅ Cooldown zurückgesetzt');sections.miniGamesCooldown();}
+  else toast('❌ Fehler!',false);
+}
+
+async function loadRoleManagement(){
+  const r=await fetch('/api/roles').catch(()=>null);
+  if(!r||!r.ok){document.getElementById('rm-users').innerHTML='<p class="text-red-400 text-sm">Fehler beim Laden der Rollen</p>';document.getElementById('rm-roles').innerHTML='';return;}
+  const d=await r.json().catch(()=>({roles:{},uiUsers:[]}));
+  const allPerms=[...new Set(['dashboardAccess','maintenanceAccess','dhbt-board_access','dhbt-board_edit','dhbt-board_admin','dhbt-embed_builder',...ALL_SECTIONS.map(s=>s.perm)].filter(p=>p&&p!=='__self__'))];
+  const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+  const users=d.uiUsers||[];
+  document.getElementById('rm-users').innerHTML=!users.length?'<p class="text-white/60 text-sm">Keine User-Interface Zugänge</p>'
+    :users.map(u=>'<div class="flex justify-between items-center mb-2" style="background:rgba(255,255,255,0.08);border-radius:8px;padding:8px 12px"><span><b class="text-white">'+u.username+'</b> <span class="text-xs text-white/60">'+(u.role?cap(u.role):'Keine Rolle')+'</span>'+(u.mcName?' <span class="text-xs text-white/40">MC: '+u.mcName+'</span>':'')+'</span><button onclick="removeDashboardUser(&quot;'+u.username+'&quot;)" class="btn btn-red text-xs">Rolle entfernen</button></div>').join('');
+  const sel=document.getElementById('rm-urole');
+  if(sel) sel.innerHTML='<option value="">Rolle wählen…</option>'+Object.keys(d.roles||{}).map(r=>'<option value="'+r+'">'+cap(r)+'</option>').join('');
+  const createForm='<div class="mb-4 p-3" style="background:rgba(255,255,255,0.05);border-radius:8px"><h4 class="font-semibold text-white/90 mb-2">Neue Rolle</h4><div class="flex gap-2 mb-2"><input id="rm-new-role" class="inp flex-1" placeholder="Rollen-Name"/><button onclick="createRole()" class="btn btn-blue whitespace-nowrap">Erstellen</button></div></div>';
+  document.getElementById('rm-roles').innerHTML=createForm+Object.entries(d.roles||{}).map(([rname,rdata])=>{
+    const color=rdata.color||'#fff';
+    const isOwner=rname==='owner';
+    const permsHtml=isOwner
+      ?'<p class="text-white/60 text-sm">Owner hat automatisch alle Berechtigungen.</p>'
+      :'<div class="grid gap-1" style="grid-template-columns:1fr 1fr">'
+        +allPerms.map(p=>'<label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" '+((rdata.permissions||[]).includes(p)?'checked':'')
+          +' onchange="toggleRolePerm(\''+rname+'\',\''+p+'\',this.checked)" style="accent-color:#4DA3FF"/><span class="text-white/80">'+p+'</span></label>').join('')
+        +'</div>';
+    const deleteBtn=(rname==='owner'||rname==='admin')?'':'<button onclick="deleteRole(\''+rname+'\')" class="btn btn-red text-xs">Löschen</button>';
+    return '<div class="mb-5"><div class="flex justify-between items-center mb-2"><h4 class="font-bold" style="color:'+color+'">'+(rdata.label?cap(rdata.label):cap(rname))+'</h4>'+deleteBtn+'</div>'+permsHtml+'</div>';
+  }).join('');
+}
+
+async function addDashboardUser(){
+  const username=document.getElementById('rm-uname')?.value?.trim();
+  const role=document.getElementById('rm-urole')?.value;
+  if(!username||!role){toast('❌ Benutzername und Rolle ausfüllen',false);return;}
+  const r=await fetch('/api/roles/user/'+encodeURIComponent(username)+'/assign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role})});
+  if(!r.ok){const d=await r.json().catch(()=>({}));toast('❌ '+(d.error||'Fehler'),false);return;}
+  toast('✅ Rolle zugewiesen!');loadRoleManagement();
+}
+async function removeDashboardUser(u){
+  const r=await fetch('/api/roles/user/'+encodeURIComponent(u),{method:'DELETE'});
+  if(!r.ok){const d=await r.json().catch(()=>({}));toast('❌ '+(d.error||'Fehler'),false);return;}
+  toast('✅ Rolle entfernt');loadRoleManagement();
+}
+async function toggleRolePerm(role,perm,enabled){
+  const rolesRes=await fetch('/api/roles').catch(()=>null);
+  if(!rolesRes||!rolesRes.ok){toast('❌ Rollen konnten nicht geladen werden',false);return;}
+  const d=await rolesRes.json().catch(()=>null);
+  if(!d||!d.roles){toast('❌ Rollen konnten nicht geladen werden',false);return;}
+  const perms=[...(d.roles[role]?.permissions||[])];
+  const idx=perms.indexOf(perm);
+  if(enabled&&idx===-1)perms.push(perm);
+  if(!enabled&&idx!==-1)perms.splice(idx,1);
+  const r=await fetch('/api/roles/role/'+role+'/permissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({permissions:perms})});
+  if(!r.ok){toast('❌ Berechtigung konnte nicht gespeichert werden',false);return;}
+  toast('✅ '+role+': '+perm+' '+(enabled?'an':'aus'));
+}
+
+async function createRole(){
+  const name=document.getElementById('rm-new-role')?.value?.trim();
+  if(!name){toast('❌ Bitte Namen eingeben',false);return;}
+  const r=await fetch('/api/roles/role',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roleName:name})});
+  if(!r.ok){const d=await r.json().catch(()=>({}));toast('❌ '+(d.error||'Fehler'),false);return;}
+  toast('✅ Rolle erstellt');document.getElementById('rm-new-role').value='';loadRoleManagement();
+}
+
+async function deleteRole(role){
+  if(!confirm('Rolle "'+role+'" wirklich löschen?')) return;
+  const r=await fetch('/api/roles/role/'+encodeURIComponent(role),{method:'DELETE'});
+  if(!r.ok){const d=await r.json().catch(()=>({}));toast('❌ '+(d.error||'Fehler'),false);return;}
+  toast('✅ Rolle gelöscht');loadRoleManagement();
+}
+
+// ---- USER SUCHE ----
+let _searchTimer=null;
+async function doUserSearch(){
+  const q=document.getElementById('us-q')?.value?.trim();
+  clearTimeout(_searchTimer);
+  if(!q){document.getElementById('us-results').innerHTML='';return;}
+  _searchTimer=setTimeout(async()=>{
+    const data=await fetch('/api/users/search?q='+encodeURIComponent(q)).then(r=>r.json()).catch(()=>[]);
+    document.getElementById('us-results').innerHTML=!data.length
+      ?card('<p class="text-white/60">Keine Ergebnisse</p>')
+      :card(tbl(['Name','Coins','Level','XP'],
+        data.map(u=>row([uname(u.userId),'<span class="text-yellow-400 font-bold">'+(u.balance||0).toLocaleString()+'</span>','<span class="text-blue-400">'+u.level+'</span>',(u.xp||0).toLocaleString()])).join('')
+      ));
+  },300);
+}
+
+// ---- PASSWORT ÄNDERN ----
+async function changePassword(){
+  const cur=document.getElementById('pw-cur')?.value;
+  const nw=document.getElementById('pw-new')?.value;
+  const rep=document.getElementById('pw-rep')?.value;
+  if(!cur||!nw||!rep){toast('❌ Alle Felder ausfüllen',false);return;}
+  if(nw!==rep){toast('❌ Passwörter stimmen nicht überein',false);return;}
+  const r=await fetch('/api/account/password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword:cur,newPassword:nw})});
+  const d=await r.json();
+  r.ok?toast('✅ Passwort geändert!'):toast('❌ '+(d.error||'Fehler'),false);
+  if(r.ok){document.getElementById('pw-cur').value='';document.getElementById('pw-new').value='';document.getElementById('pw-rep').value='';}
+}
+
+// ---- SHOP CRUD ----
+let _editShopId=null;
+function openShopItemForm(item){
+  _editShopId=item?item.id:null;
+  document.getElementById('shop-content').innerHTML=card(
+    '<h4 class="font-bold text-white mb-4">'+(item?'✏️ Artikel bearbeiten':'➕ Neuer Artikel')+'</h4>'
+    +'<input id="si-id" placeholder="ID (z.B. vip_role)" class="inp mb-2" value="'+(item?.id||'')+'"/>'
+    +'<input id="si-name" placeholder="Name" class="inp mb-2" value="'+(item?.name||'')+'"/>'
+    +'<input id="si-price" type="number" placeholder="Preis (Coins)" class="inp mb-2" value="'+(item?.price||'')+'"/>'
+    +'<input id="si-cat" placeholder="Kategorie" class="inp mb-2" value="'+(item?.category||'')+'"/>'
+    +'<input id="si-desc" placeholder="Beschreibung" class="inp mb-4" value="'+(item?.description||'')+'"/>'
+    +'<div class="flex gap-2"><button onclick="saveShopItem()" class="btn btn-green">💾 Speichern</button><button onclick="loadShopItems()" class="btn btn-gray">Abbrechen</button></div>'
+  );
+}
+async function saveShopItem(){
+  const body={id:document.getElementById('si-id')?.value?.trim(),name:document.getElementById('si-name')?.value?.trim(),price:document.getElementById('si-price')?.value,category:document.getElementById('si-cat')?.value?.trim(),description:document.getElementById('si-desc')?.value?.trim()};
+  if(!body.id||!body.name){toast('❌ ID und Name erforderlich',false);return;}
+  const r=await fetch('/api/shop/item',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  r.ok?toast('✅ Artikel gespeichert!'):toast('❌ Fehler!',false);
+  if(r.ok)loadShopItems();
+}
+async function deleteShopItem(id){
+  if(!confirm('Artikel "'+id+'" wirklich löschen?'))return;
+  await fetch('/api/shop/item/'+id,{method:'DELETE'});
+  toast('🗑 Artikel gelöscht');loadShopItems();
+}
+async function completeOrder(idx){
+  await fetch('/api/shop/order/'+idx+'/complete',{method:'POST'});
+  toast('✅ Bestellung erledigt');loadShopOrders();
+}
+
+// ---- WEEKLY RESET ----
+async function resetWeekly(){
+  if(!confirm('Weekly Mission wirklich zurücksetzen?'))return;
+  const r=await fetch('/api/weekly/reset',{method:'POST'});
+  r.ok?toast('✅ Weekly zurückgesetzt!'):toast('❌ Fehler!',false);
+  if(r.ok)sections.weekly();
+}
+
+// ---- RESTART MANAGER ----
+const RM_API = '/proxy/rm';
+async function rmFetch(path, method='GET', body){const opts={method,headers:{'Content-Type':'application/json'},credentials:'include'};if(body)opts.body=JSON.stringify(body);try{return await fetch(RM_API+path,opts).then(r=>r.json());}catch(e){return{ok:false,error:'Restart Manager nicht erreichbar'};}}
+function fmtUptime(s){if(!s&&s!==0)return'—';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>0)return h+'h '+m+'m';if(m>0)return m+'m '+sec+'s';return sec+'s';}
+function fmtMs(ms){return ms!=null?ms+' ms':'—';}
+function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function rmStatusBadge(s){const m={online:'<span style="background:rgba(34,211,160,.15);color:#22d3a0;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:700">🟢 Online</span>',offline:'<span style="background:rgba(239,68,68,.15);color:#ef4444;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:700">🔴 Offline</span>',starting:'<span style="background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:700">🟡 Startet…</span>',unknown:'<span style="color:rgba(255,255,255,.4);font-size:.8rem">—</span>'};return m[s]||m.unknown;}
+function rmMetricCard(label,value,color){return '<div class="card" style="padding:14px 16px;text-align:center"><p class="text-xs mb-1" style="color:rgba(255,255,255,.5)">'+label+'</p><p class="font-bold" style="color:'+(color||'#fff')+'">'+value+'</p></div>';}
+async function rmLoadStatus(){
+  const d=await rmFetch('/status');
+  if(!d.ok&&!d.data){document.getElementById('rm-content').innerHTML='<div class="card"><p class="text-red-400 font-bold">⚠️ Restart Manager nicht erreichbar – läuft er auf Port 4000?</p></div>';return;}
+  const s=d.data||d;
+  const ws=s.website||{};const bot=s.bot||{};
+  document.getElementById('rm-ws-status').innerHTML=rmStatusBadge(ws.status);
+  document.getElementById('rm-ws-rt').textContent=fmtMs(ws.responseTime);
+  document.getElementById('rm-ws-cpu').textContent=ws.cpu!=null?ws.cpu+'%':'—';
+  document.getElementById('rm-ws-ram').textContent=ws.memory!=null?ws.memory+' MB':'—';
+  document.getElementById('rm-ws-uptime').textContent=fmtUptime(ws.uptime);
+  document.getElementById('rm-ws-restart').textContent=fmtDate(ws.lastRestart);
+  document.getElementById('rm-ws-err').textContent=ws.lastError||'—';
+  document.getElementById('rm-bot-status').innerHTML=rmStatusBadge(bot.status);
+  document.getElementById('rm-bot-cpu').textContent=bot.cpu!=null?bot.cpu+'%':'—';
+  document.getElementById('rm-bot-ram').textContent=bot.memory!=null?bot.memory+' MB':'—';
+  document.getElementById('rm-bot-uptime').textContent=fmtUptime(bot.uptime);
+  document.getElementById('rm-bot-restart').textContent=fmtDate(bot.lastRestart);
+  document.getElementById('rm-bot-err').textContent=bot.lastError||'—';
+  document.getElementById('rm-lock').style.display=s.restartLock?'flex':'none';
+  const offState=s.offline||{};
+  document.getElementById('rm-global-offline').checked=!!offState.globalOffline;
+  document.getElementById('rm-global-reason').value=offState.globalReason||'';
+}
+async function rmAction(path,trigger){
+  if(!confirm('Aktion ausführen: '+path+'?'))return;
+  const r=await rmFetch(path,'POST',{trigger:trigger||'dashboard'});
+  if(r.ok||r.pid){toast('✅ Aktion erfolgreich');}else{toast('❌ '+(r.error||'Fehler'),false);}
+  setTimeout(rmLoadStatus,1500);
+}
+async function rmCrash(service){
+  if(!confirm('⚠️ '+service+' wirklich crashen?\n\nDer Prozess wird via SIGKILL beendet. Der Auto-Restart startet ihn danach neu.'))return;
+  const r=await rmFetch('/crash/'+service,'POST',{trigger:'dashboard'});
+  if(r.ok){toast('💥 '+service+' gecrasht – Auto-Restart läuft…');}else{toast('❌ '+(r.error||'Fehler'),false);}
+  setTimeout(rmLoadStatus,2000);
+}
+async function rmSetGlobalOffline(){
+  const offline=document.getElementById('rm-global-offline').checked;
+  const reason=document.getElementById('rm-global-reason').value;
+  const r=await rmFetch('/offline/global','POST',{offline,reason,trigger:'dashboard'});
+  r.ok?toast('✅ Offline-Status gesetzt'):toast('❌ Fehler',false);
+}
+async function rmSetPageOffline(pageId){
+  const offline=document.getElementById('rm-page-'+pageId).checked;
+  const reason=document.getElementById('rm-pagereason-'+pageId)?.value||'';
+  const r=await rmFetch('/offline/page','POST',{pageId,offline,reason,trigger:'dashboard'});
+  r.ok?toast('✅ Seite aktualisiert'):toast('❌ Fehler',false);
+}
+
+const ALL_PAGES=[
+  {path:'/home',         label:'🏠 Hauptseite',            id:'home'},
+  {path:'/profile',      label:'👤 Profil / Login',        id:'profile'},
+  {path:'/status',       label:'📊 Status-Seite',          id:'status'},
+  {path:'/mitglieder',   label:'👥 Mitglieder',            id:'mitglieder'},
+  {path:'/karten',       label:'🗺️ Karten',               id:'karten'},
+  {path:'/builder',      label:'🔨 Bauaufträge',           id:'builder'},
+  {path:'/faq',          label:'❓ FAQ',                   id:'faq'},
+  {path:'/skin-editor',  label:'🎨 Skin-Editor',           id:'skineditor'},
+  {path:'/events',       label:'📅 Event Portal',          id:'events'},
+  {path:'/dashboard',    label:'⚙️ Dashboard',             id:'dashboard'},
+  {path:'/impressum',    label:'📄 Impressum',             id:'impressum'},
+  {path:'/datenschutz',  label:'🔏 Datenschutz',           id:'datenschutz'},
+  {path:'/nutzungsbedingungen',label:'📋 Nutzungsbedingungen',id:'nutzung'},
+];
+
+async function loadSiteLock(){
+  const d=await fetch('/api/site-lock').then(r=>r.json()).catch(()=>({enabled:false,reason:'',allowedPages:['/dashboard'],blockedPages:[]}));
+  const on=d.enabled;
+  const allowed=d.allowedPages||[];
+  const blocked=d.blockedPages||[];
+
+  // ── Status card ──
+  document.getElementById('sl-status-card').innerHTML=
+    '<h3 class="font-bold text-white mb-4">🔒 Website-Sperre</h3>'+
+    '<div class="flex items-center justify-between mb-5 p-4 rounded-xl" style="background:'+(on?'rgba(237,66,69,0.15)':'rgba(59,165,92,0.12)')+';border:1px solid '+(on?'rgba(237,66,69,0.3)':'rgba(59,165,92,0.25)')+'">'+
+      '<div>'+
+        '<p class="font-bold text-lg '+(on?'text-red-400':'text-green-400')+'">'+(on?'🔒 GESPERRT':'🔓 OFFEN')+'</p>'+
+        '<p class="text-xs text-white/50 mt-0.5">'+(on?'Besucher sehen die Wartungsseite':'Alle Seiten sind öffentlich erreichbar')+'</p>'+
+      '</div>'+
+      '<label class="relative inline-flex items-center cursor-pointer">'+
+        '<input type="checkbox" id="sl-toggle" '+(on?'checked':'')+' class="sr-only peer" onchange="quickToggleLock(this.checked)">'+
+        '<div class="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[\'\'] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500"></div>'+
+      '</label>'+
+    '</div>'+
+    (on&&d.reason?'<div class="mb-3 p-3 rounded-lg text-sm text-white/70" style="background:rgba(255,255,255,0.05)">📝 Grund: <span class="text-white font-medium">'+d.reason+'</span></div>':'')+
+    '<div class="flex gap-2 mt-2">'+
+      '<button onclick="quickLock(true)" class="btn btn-red flex-1" style="font-size:.8rem">🔒 Jetzt sperren</button>'+
+      '<button onclick="quickLock(false)" class="btn btn-green flex-1" style="font-size:.8rem">🔓 Entsperren</button>'+
+    '</div>'+
+    (d.loggedIn===false&&on?'<p class="text-xs text-white/40 mt-3 text-center">Du selbst hast noch Zugang weil du eingeloggt bist.</p>':'');
+
+  // ── Config card ──
+  document.getElementById('sl-config-card').innerHTML=
+    '<h3 class="font-bold text-white mb-4">⚙️ Einstellungen</h3>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-1">Wartungs-Grund</label>'+
+    '<input id="lock-reason" type="text" value="'+(d.reason||'')+'" placeholder="z. B. Update wird eingespielt…" class="inp"/></div>'+
+    '<div class="mb-3"><label class="text-sm text-white/60 block mb-2">🔴 Gesperrte Seiten</label>'+
+    '<div class="grid gap-1.5" style="grid-template-columns:1fr 1fr">'+
+    ALL_PAGES.map(p=>'<label class="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded-lg hover:bg-white/5"><input type="checkbox" id="lock-block-'+p.id+'" data-path="'+p.path+'" '+(blocked.includes(p.path)?'checked':'')+' style="accent-color:#ed4245;width:15px;height:15px"/><span class="text-white/80">'+p.label+'</span></label>').join('')+
+    '</div></div>'+
+    '<div class="mb-4"><label class="text-sm text-white/60 block mb-2">🟢 Immer erreichbar</label>'+
+    '<div class="grid gap-1.5" style="grid-template-columns:1fr 1fr">'+
+    ALL_PAGES.map(p=>'<label class="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded-lg hover:bg-white/5"><input type="checkbox" id="lock-allow-'+p.id+'" data-path="'+p.path+'" '+(allowed.includes(p.path)?'checked':'')+' style="accent-color:#3ba55c;width:15px;height:15px"/><span class="text-white/80">'+p.label+'</span></label>').join('')+
+    '</div></div>'+
+    '<button onclick="saveSiteLock()" class="btn btn-blue w-full">💾 Einstellungen speichern</button>';
+}
+
+async function quickToggleLock(enabled){
+  const d=await fetch('/api/site-lock').then(r=>r.json()).catch(()=>({reason:'',allowedPages:['/dashboard'],blockedPages:[]}));
+  const body={enabled,reason:d.reason||'',allowedPages:d.allowedPages||['/dashboard'],blockedPages:d.blockedPages||[]};
+  const r=await fetch('/api/site-lock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){toast(enabled?'🔒 Website gesperrt!':'🔓 Website entsperrt!',r.ok);loadSiteLock();}
+  else toast('❌ Fehler',false);
+}
+
+async function quickLock(enable){
+  const reason=document.getElementById('lock-reason')?.value||'';
+  const blocked=[],allowed=[];
+  document.querySelectorAll('[id^="lock-block-"]').forEach(cb=>{if(cb.checked)blocked.push(cb.getAttribute('data-path'));});
+  document.querySelectorAll('[id^="lock-allow-"]').forEach(cb=>{if(cb.checked)allowed.push(cb.getAttribute('data-path'));});
+  const body={enabled:enable,reason,blockedPages:blocked,allowedPages:allowed};
+  const r=await fetch('/api/site-lock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){toast(enable?'🔒 Website gesperrt!':'🔓 Website entsperrt!');loadSiteLock();}
+  else toast('❌ Fehler',false);
+}
+
+async function setWebsiteDesign(theme){
+  const r=await fetch('/api/theme',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({activeTheme:theme})});
+  const status=document.getElementById('wd-status');
+  if(r.ok){status.innerHTML='<span class="text-green-400">✅ Design gespeichert: '+theme+'</span>';websiteDesign();}
+  else {status.innerHTML='<span class="text-red-400">❌ Fehler beim Speichern</span>';toast('❌ Fehler',false);}
+}
+
+async function saveSiteLock(){
+  const blocked=[],allowed=[];
+  document.querySelectorAll('[id^="lock-block-"]').forEach(cb=>{if(cb.checked)blocked.push(cb.getAttribute('data-path'));});
+  document.querySelectorAll('[id^="lock-allow-"]').forEach(cb=>{if(cb.checked)allowed.push(cb.getAttribute('data-path'));});
+  const enabled=document.getElementById('sl-toggle')?.checked||false;
+  const body={enabled,reason:document.getElementById('lock-reason')?.value||'',blockedPages:blocked,allowedPages:allowed};
+  const r=await fetch('/api/site-lock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){toast('✅ Einstellungen gespeichert');loadSiteLock();}
+  else toast('❌ Fehler beim Speichern',false);
+}
+
+// ============ GUILD SWITCHER ============
+async function openGuildSwitcher() {
+  // Modal öffnen
+  let modal = document.getElementById('guildSwitchModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'guildSwitchModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:1rem';
+    modal.innerHTML = `
+      <div style="background:#0f1530;border:1px solid rgba(255,255,255,0.1);border-radius:14px;max-width:420px;width:100%;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+        <h3 style="margin:0 0 1rem;font-size:1.1rem;color:#fff">🔄 Server wechseln</h3>
+        <div id="guildSwitchList" style="max-height:340px;overflow-y:auto;margin-bottom:1rem"></div>
+        <div style="display:flex;gap:.5rem;justify-content:flex-end">
+          <button onclick="closeGuildSwitcher()" class="btn btn-gray" style="font-size:.82rem">Abbrechen</button>
+        </div>
+      </div>`;
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeGuildSwitcher(); });
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  const list = document.getElementById('guildSwitchList');
+  list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem">Lade Server...</div>';
+
+  try {
+    const r = await fetch('/api/guilds');
+    if (!r.ok) { list.innerHTML = '<div style="color:#f87171;text-align:center;padding:1rem">Nicht authentifiziert</div>'; return; }
+    const d = await r.json();
+    const guilds = d.guilds || [];
+    const currentId = d.currentGuildId;
+    if (guilds.length === 0) {
+      list.innerHTML = '<div style="color:rgba(255,255,255,0.5);text-align:center;padding:1rem">Keine Server verfügbar</div>';
+      return;
+    }
+    list.innerHTML = '';
+    for (const g of guilds) {
+      const isCurrent = g.id === currentId;
+      const icon = g.icon
+        ? `<img src="${g.icon}" style="width:32px;height:32px;border-radius:8px;flex-shrink:0" alt="" />`
+        : `<div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">🏠</div>`;
+      const btn = document.createElement('button');
+      btn.style.cssText = `width:100%;display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;margin-bottom:.4rem;border-radius:9px;border:1px solid ${isCurrent ? 'rgba(77,163,255,0.4)' : 'rgba(255,255,255,0.07)'};background:${isCurrent ? 'rgba(77,163,255,0.12)' : 'rgba(255,255,255,0.03)'};cursor:${isCurrent ? 'default' : 'pointer'};color:#e8eaf6;text-align:left;transition:all .15s`;
+      if (!isCurrent) {
+        btn.onmouseenter = () => { btn.style.background = 'rgba(255,255,255,0.08)'; };
+        btn.onmouseleave = () => { btn.style.background = 'rgba(255,255,255,0.03)'; };
+        btn.onclick = () => switchGuild(g.id);
+      }
+      btn.innerHTML = `${icon}<span style="flex:1;font-size:.88rem">${g.name}</span><span style="font-size:.72rem;color:rgba(255,255,255,0.4)">${g.memberCount || 0} Mitglieder</span>${isCurrent ? '<span style="font-size:.7rem;color:#7dc4ff;font-weight:600">✓ Aktuell</span>' : ''}`;
+      list.appendChild(btn);
+    }
+  } catch (e) {
+    list.innerHTML = '<div style="color:#f87171;text-align:center;padding:1rem">Verbindungsfehler</div>';
+  }
+}
+
+function closeGuildSwitcher() {
+  const modal = document.getElementById('guildSwitchModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function switchGuild(guildId) {
+  try {
+    const r = await fetch('/api/switch-guild', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guildId })
+    });
+    const d = await r.json();
+    if (r.ok && d.success) {
+      window.location.href = d.redirect || `/dashboard/${guildId}`;
+    } else {
+      alert(d.error || 'Server-Wechsel fehlgeschlagen');
+    }
+  } catch (e) {
+    alert('Verbindungsfehler');
+  }
+}
+
+checkAuth();
+</script>
+<script src="/cookie-banner.js"></script>
+<!-- DHBT-Code | Developt by DHBT -->
+<script src="/themes/theme-loader.js"></script>
+</body>
+</html>
